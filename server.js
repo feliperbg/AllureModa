@@ -1,0 +1,76 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+
+// Verificação de variáveis de ambiente
+if (!process.env.DATABASE_URL || !process.env.JWT_SECRET || !process.env.FRONTEND_URL) {
+  console.error("FATAL ERROR: As variáveis de ambiente DATABASE_URL, JWT_SECRET e FRONTEND_URL devem ser definidas.");
+  process.exit(1); // Encerra a aplicação se variáveis críticas não estiverem definidas
+}
+
+const app = express();
+
+// Configuração do CORS
+const corsOptions = {
+  origin: process.env.FRONTEND_URL, // Apenas a origem do frontend é permitida
+  credentials: true, // Essencial para permitir o envio de cookies
+};
+
+app.use(cors(corsOptions));
+
+// Middlewares essenciais
+app.use(cookieParser()); // Para parsear cookies
+app.use(express.json()); // Para parsear JSON no corpo das requisições
+app.use(express.static(path.join(__dirname, 'view', 'public'))); // Servir arquivos estáticos da pasta 'public'
+
+// --- Importação das Rotas ---
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+const addressRoutes = require('./routes/address');
+const brandRoutes = require('./routes/brand');
+const cartRoutes = require('./routes/cart');
+const categoryRoutes = require('./routes/category');
+const orderRoutes = require('./routes/order');
+const reviewRoutes = require('./routes/review');
+const userRoutes = require('./routes/user');
+const wishlistRoutes = require('./routes/wishlist');
+
+
+// --- Uso das Rotas ---
+// As rotas da API serão prefixadas com /api
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/addresses', addressRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+
+//As rotas estáticos renderizar o frontend
+app.get('/', (req, res) => { 
+  res.sendFile(path.join(__dirname, 'view', 'public', 'index.html'));
+});
+
+
+// Rota de "saúde" da API para verificar se está online
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'UP', timestamp: new Date() });
+});
+
+// Middleware de tratamento de erros (exemplo simples)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Algo deu errado!');
+});
+
+// Inicialização do Servidor
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`CORS configurado para aceitar requisições de: ${process.env.FRONTEND_URL}`);
+});
