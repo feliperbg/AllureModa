@@ -23,7 +23,6 @@ app.use(cors(corsOptions));
 // Middlewares essenciais
 app.use(cookieParser()); // Para parsear cookies
 app.use(express.json()); // Para parsear JSON no corpo das requisições
-app.use(express.static(path.join(__dirname, 'view', 'public'))); // Servir arquivos estáticos da pasta 'public'
 
 // --- Importação das Rotas ---
 const authRoutes = require('./routes/auth');
@@ -51,12 +50,6 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 
-//As rotas estáticos renderizar o frontend
-app.get('/', (req, res) => { 
-  res.sendFile(path.join(__dirname, 'view', 'public', 'index.html'));
-});
-
-
 // Rota de "saúde" da API para verificar se está online
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'UP', timestamp: new Date() });
@@ -71,6 +64,6 @@ app.use((err, req, res, next) => {
 // Inicialização do Servidor
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor de API rodando na porta ${PORT}`);
   console.log(`CORS configurado para aceitar requisições de: ${process.env.FRONTEND_URL}`);
 });

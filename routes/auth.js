@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const { register, login, logout, getMe } = require('../controller/authController');

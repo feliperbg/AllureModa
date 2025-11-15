@@ -1,4 +1,3 @@
-
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -8,7 +7,7 @@ const prisma = new PrismaClient();
  * @access  Privado (Admin)
  */
 const createProductController = async (req, res) => {
-  const { name, description, brandId, categoryId, variants, images } = req.body;
+  const { name, description, brandId, categoryId, variants, images, basePrice } = req.body;
 
   try {
     const newProduct = await prisma.$transaction(async (prisma) => {
@@ -19,7 +18,8 @@ const createProductController = async (req, res) => {
           description,
           brandId,
           categoryId,
-          slug: name.toLowerCase().replace(/\s+/g, '-'), // Gerar slug a partir do nome
+          basePrice, // garantir que venha no body ou setar valor padrão
+          slug: name.toLowerCase().replace(/\s+/g, '-'),
         },
       });
 
@@ -48,7 +48,7 @@ const createProductController = async (req, res) => {
           if (attributes && attributes.length > 0) {
             await prisma.productVariantAttributeValue.createMany({
               data: attributes.map(attr => ({
-                variantId: variant.id,
+                productVariantId: variant.id, // nome correto conforme schema
                 attributeValueId: attr.attributeValueId,
               })),
             });
