@@ -1,26 +1,42 @@
-
 import React, { createContext, useState, useEffect } from 'react';
-import apiClient from '../api/axiosConfig';
+import api from '../api/axiosConfig';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState({ user: null, isAuthenticated: false });
+  const [auth, setAuth] = useState({
+    user: null,
+    isAuthenticated: false,
+  });
 
+  const [loading, setLoading] = useState(true);
+
+  // Verificar se o usuário está logado ao carregar a página
   useEffect(() => {
-    const checkLoggedIn = async () => {
+    const checkAuth = async () => {
       try {
-        const { data } = await apiClient.get('/auth/me');
-        setAuth({ user: data, isAuthenticated: true });
-      } catch (err) {
-        setAuth({ user: null, isAuthenticated: false });
+        const response = await api.get('/auth/me');
+        if (response.data) {
+          setAuth({
+            user: response.data,
+            isAuthenticated: true,
+          });
+        }
+      } catch (error) {
+        setAuth({
+          user: null,
+          isAuthenticated: false,
+        });
+      } finally {
+        setLoading(false);
       }
     };
-    checkLoggedIn();
+
+    checkAuth();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ auth, setAuth }}>
+    <AuthContext.Provider value={{ auth, setAuth, loading }}>
       {children}
     </AuthContext.Provider>
   );
