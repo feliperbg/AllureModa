@@ -35,6 +35,8 @@ const orderRoutes = require('./routes/order');
 const reviewRoutes = require('./routes/review');
 const userRoutes = require('./routes/user');
 const wishlistRoutes = require('./routes/wishlist');
+const adminRoutes = require('./routes/admin');
+const attributeRoutes = require('./routes/attribute');
 
 
 // --- Uso das Rotas ---
@@ -49,6 +51,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/attributes', attributeRoutes);
 
 // Rota de "saúde" da API para verificar se está online
 app.get('/api/health', (req, res) => {

@@ -1,28 +1,34 @@
 // src/components/FeaturedProducts.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
+import api from '../api/axiosConfig';
 
-// Dados mockados. Substitua pelos dados reais da sua API/backend.
-const products = [
-  { id: 1, name: 'Vestido de Seda', price: 'R$ 450,00', imageUrl: '/images/product1.jpg' },
-  { id: 2, name: 'Bolsa de Couro', price: 'R$ 720,00', imageUrl: '/images/product2.jpg' },
-  { id: 3, name: 'Sapato Scarpin', price: 'R$ 380,00', imageUrl: '/images/product3.jpg' },
-  { id: 4, name: 'Blazer Alongado', price: 'R$ 590,00', imageUrl: '/images/product4.jpg' },
-];
+const FeaturedProducts = ({ type = 'top' }) => {
+  const [products, setProducts] = React.useState([]);
+  const [error, setError] = React.useState('');
+  React.useEffect(() => {
+    api.get('/products/featured', { params: { type } }).then(({ data }) => {
+      setProducts(Array.isArray(data) ? data : []);
+    }).catch(()=>setError('Falha ao carregar destaques'));
+  }, [type]);
 
-const FeaturedProducts = () => {
   return (
     <section className="py-20 bg-allure-beige">
       <div className="container mx-auto px-4">
-        <h2 className="text-center font-serif text-4xl mb-12">Produtos em Destaque</h2>
+        <h2 className="text-center font-serif text-4xl mb-12">
+          {type === 'promo' ? 'Produtos em Promoção' : 'Produtos em Destaque'}
+        </h2>
+        {error && <div className="text-center text-red-600 mb-4">{error}</div>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
           {products.map((product) => (
-            <ProductCard 
-              key={product.id}
-              name={product.name}
-              price={product.price}
-              imageUrl={product.imageUrl} // Certifique-se que essas imagens existem
-            />
+            <Link key={product.id} to={`/products/${product.slug}`}>
+              <ProductCard 
+                name={product.name}
+                price={product.basePrice}
+                imageUrl={product.images?.[0]?.url}
+              />
+            </Link>
           ))}
         </div>
       </div>

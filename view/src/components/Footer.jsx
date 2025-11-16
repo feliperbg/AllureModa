@@ -1,5 +1,6 @@
 // src/components/Footer.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Twitter, Instagram, Facebook, Pin } from 'lucide-react';
 
 const Footer = () => {
@@ -8,9 +9,9 @@ const Footer = () => {
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Logo e Social */}
         <div className="md:col-span-2 mb-6 md:mb-0">
-          <a href="/" className="font-serif text-3xl tracking-widest text-allure-gold">
+          <Link to="/" className="font-serif text-3xl tracking-widest text-allure-gold">
             ALLURE
-          </a>
+          </Link>
           <p className="text-gray-400 mt-2 font-sans">by Lu Mota</p>
           <div className="flex space-x-4 mt-6">
             <a className="..." href="https://pinterest.com" target="_blank" rel="noopener noreferrer">
@@ -32,8 +33,8 @@ const Footer = () => {
         <div>
           <h3 className="font-sans font-bold tracking-wide uppercase text-white">Institucional</h3>
           <ul className="mt-4 space-y-2 font-sans">
-            <li><a href="/about" className="text-gray-400 hover:text-allure-gold">Sobre Nós</a></li>
-            <li><a href="/contact" className="text-gray-400 hover:text-allure-gold">Contato</a></li>
+            <li><Link to="/about" className="text-gray-400 hover:text-allure-gold">Sobre Nós</Link></li>
+            <li><Link to="/contact" className="text-gray-400 hover:text-allure-gold">Contato</Link></li>
           </ul>
         </div>
         
@@ -41,9 +42,9 @@ const Footer = () => {
         <div>
           <h3 className="font-sans font-bold tracking-wide uppercase text-white">Ajuda</h3>
           <ul className="mt-4 space-y-2 font-sans">
-            <li><a href="/faq" className="text-gray-400 hover:text-allure-gold">FAQ</a></li>
-            <li><a href="/trade-politics" className="text-gray-400 hover:text-allure-gold">Política de Troca</a></li>
-            <li><a href="/track-order" className="text-gray-400 hover:text-allure-gold">Rastrear Pedido</a></li>
+            <li><Link to="/faq" className="text-gray-400 hover:text-allure-gold">FAQ</Link></li>
+            <li><Link to="/trade-politics" className="text-gray-400 hover:text-allure-gold">Política de Troca</Link></li>
+            <li><Link to="/track-order" className="text-gray-400 hover:text-allure-gold">Rastrear Pedido</Link></li>
           </ul>
         </div>
       </div>
