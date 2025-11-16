@@ -1,19 +1,61 @@
-
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import Login from './components/Login';
-import ProductList from './components/ProductList';
+import React, { useContext } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import HomePage from './pages/HomePage';
+import Auth from './components/Auth';
 import ProductDetail from './components/ProductDetail';
+import ProductList from './components/ProductList';
+import CookieConsent from './components/CookieConsent';
+import CartPage from './pages/CartPage';
+import WishlistPage from './pages/WishlistPage';
+import SearchPage from './pages/SearchPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import FAQPage from './pages/FAQPage';
+import TradePolicyPage from './pages/TradePolicyPage';
+import TrackOrderPage from './pages/TrackOrderPage';
+import AccountPage from './pages/AccountPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ProductsAdmin from './pages/admin/ProductsAdmin';
+import CustomersAdmin from './pages/admin/CustomersAdmin';
+import { AuthContext } from './context/AuthContext';
 
 function App() {
+  const { auth } = useContext(AuthContext);
+  const AdminOnly = ({ children }) => (auth?.user?.role === 'ADMIN' ? children : <div className="p-10 text-center">Acesso restrito ao administrador.</div>);
   return (
-    <Router>
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/products/:slug" component={ProductDetail} />
-        <Route path="/products" component={ProductList} />
-      </Switch>
-    </Router>
+    <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <CookieConsent />
+        
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/register" element={<Auth />} />
+            <Route path="/products" element={<ProductList />} />
+            <Route path="/products/:slug" element={<ProductDetail />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/trade-politics" element={<TradePolicyPage />} />
+            <Route path="/track-order" element={<TrackOrderPage />} />
+            <Route path="/admin" element={<AdminOnly><AdminDashboard /></AdminOnly>} />
+            <Route path="/admin/products" element={<AdminOnly><ProductsAdmin /></AdminOnly>} />
+            <Route path="/admin/customers" element={<AdminOnly><CustomersAdmin /></AdminOnly>} />
+            {/* Adicione mais rotas conforme necessário */}
+          </Routes>
+        </main>
+
+        <Footer />
+      </div>
+    </BrowserRouter>
   );
 }
 

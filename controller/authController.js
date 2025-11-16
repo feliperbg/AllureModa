@@ -26,7 +26,7 @@ const generateTokenAndSetCookie = (userId, res) => {
  */
 const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, phone, cpf, address } = req.body;
 
     // Validação básica
     if (!firstName || !lastName || !email || !password) {
@@ -44,13 +44,27 @@ const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Cria o usuário no banco de dados
-    const newUser = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        passwordHash,
-      },
+    const newUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: { firstName, lastName, email, passwordHash, phone, cpf },
+      });
+
+      if (address && address.postalCode && address.street && address.city && address.state) {
+        await tx.address.create({
+          data: {
+            street: address.street,
+            city: address.city,
+            state: address.state,
+            postalCode: address.postalCode,
+            country: address.country || 'Brazil',
+            addressLine2: address.addressLine2 || null,
+            type: 'SHIPPING',
+            userId: user.id,
+          },
+        });
+      }
+
+      return user;
     });
 
     // Gera o token e o cookie
@@ -62,6 +76,7 @@ const register = async (req, res) => {
       firstName: newUser.firstName,
       lastName: newUser.lastName,
       email: newUser.email,
+      cpf: newUser.cpf || null,
       role: newUser.role,
     });
 

@@ -1,11 +1,10 @@
-
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from 'react'; // 1. Importar useContext
 import apiClient from '../api/axiosConfig';
-// import { AuthContext } from '../context/AuthContext'; // Exemplo de como usar um Contexto
+import { AuthContext } from '../context/AuthContext'; // 2. Importar o AuthContext
 
 const Login = () => {
-  // Supondo que você tenha um AuthContext para gerenciar o estado de autenticação
-  // const { setAuth } = useContext(AuthContext);
+  // 3. Obter a função 'setAuth' do contexto
+  const { setAuth } = useContext(AuthContext);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,13 +25,14 @@ const Login = () => {
       // Se o login for bem-sucedido, o backend retorna os dados do usuário
       const userData = response.data;
       
-      // --- Gerenciamento de Estado Global ---
-      // Aqui você atualizaria seu estado global (Context, Redux, etc.)
-      // Exemplo com um hipotético AuthContext:
-      // setAuth({ user: userData, isAuthenticated: true });
+      // ATUALIZAR O ESTADO GLOBAL com os dados do usuário
+      setAuth({ user: userData, isAuthenticated: true });
 
       console.log('Login bem-sucedido!', userData);
       
+      // 5. Parar o loading
+      setLoading(false);
+
       // Você pode redirecionar o usuário para a página principal ou um dashboard
       // window.location.href = '/dashboard';
 

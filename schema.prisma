@@ -45,6 +45,7 @@ model User {
   firstName     String
   lastName      String
   phone         String?
+  cpf           String?   @unique
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -115,6 +116,7 @@ model Product {
   description String
   slug        String   @unique
   basePrice   Decimal  @db.Decimal(10, 2) // O preço "a partir de"
+  isPromotional Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

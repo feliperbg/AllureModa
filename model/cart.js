@@ -1,27 +1,34 @@
 
 const { prisma } = require('../prisma/client');
 
-const createCart = async (data) => {
+const createCart = async (userId) => {
   const cart = await prisma.cart.create({
-    data,
+    data: { userId },
   });
   return cart;
 };
 
 const findCartByUserId = async (userId) => {
   const cart = await prisma.cart.findUnique({
-    where: {
-      userId,
+    where: { userId },
+    include: {
+      items: {
+        include: {
+          productVariant: {
+            include: {
+              product: { include: { brand: true } },
+            },
+          },
+        },
+      },
     },
   });
   return cart;
 };
 
-const updateCart = async (id, data) => {
+const updateCart = async (userId, data) => {
   const cart = await prisma.cart.update({
-    where: {
-      id,
-    },
+    where: { userId },
     data,
   });
   return cart;
