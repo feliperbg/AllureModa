@@ -20,6 +20,8 @@ module.exports = {
         sans: ['Inter', ...fontFamily.sans],
         // Fonte cursiva para destaques (como "Nossa Missão")
         cursive: ['"Dancing Script"', ...fontFamily.serif],
+
+        sansSerif: ['"Open Sans"', ...fontFamily.sans],
       },
     },
   },

@@ -19,17 +19,67 @@ const Auth = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    cpf: '',
+    cep: '',
+    street: '',
+    city: '',
+    state: '',
+    addressLine2: '',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const v = name === 'phone' ? maskPhone(value) : name === 'cpf' ? maskCpf(value) : name === 'cep' ? maskCep(value) : value;
+    setFormData(prev => ({ ...prev, [name]: v }));
     setError('');
   };
+
+  const maskPhone = (v) => {
+    const d = (v || '').replace(/\D/g, '');
+    if (d.length <= 2) return d;
+    if (d.length <= 7) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+    return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7,11)}`;
+  };
+
+  const maskCpf = (v) => {
+    const d = (v||'').replace(/\D/g,'').slice(0,11);
+    const p1 = d.slice(0,3);
+    const p2 = d.slice(3,6);
+    const p3 = d.slice(6,9);
+    const p4 = d.slice(9,11);
+    let out = '';
+    if (p1) out = p1;
+    if (p2) out = `${out}.${p2}`;
+    if (p3) out = `${out}.${p3}`;
+    if (p4) out = `${out}-${p4}`;
+    return out;
+  };
+
+  const maskCep = (v) => {
+    const d = (v||'').replace(/\D/g,'').slice(0,8);
+    const p1 = d.slice(0,5);
+    const p2 = d.slice(5,8);
+    return p2 ? `${p1}-${p2}` : p1;
+  };
+
+  React.useEffect(() => {
+    const d = formData.cep.replace(/\D/g,'');
+    if (!isLogin && d.length === 8) {
+      fetch(`https://viacep.com.br/ws/${d}/json/`).then(r=>r.json()).then((data)=>{
+        if (!data.erro) {
+          setFormData(prev=>({
+            ...prev,
+            street: data.logradouro || prev.street,
+            city: data.localidade || prev.city,
+            state: data.uf || prev.state,
+          }));
+        }
+      }).catch(()=>{});
+    }
+  }, [formData.cep, isLogin]);
 
   // Validação básica
   const validateForm = () => {
@@ -37,8 +87,20 @@ const Auth = () => {
       setError('Email e senha são obrigatórios.');
       return false;
     }
-    if (!isLogin && !formData.fullName) {
-      setError('Nome completo é obrigatório.');
+    if (!isLogin && (!formData.firstName || !formData.lastName)) {
+      setError('Nome e sobrenome são obrigatórios.');
+      return false;
+    }
+    if (!isLogin && formData.phone && formData.phone.replace(/\D/g,'').length < 10) {
+      setError('Telefone inválido.');
+      return false;
+    }
+    if (!isLogin && formData.cpf && formData.cpf.replace(/\D/g,'').length !== 11) {
+      setError('CPF inválido.');
+      return false;
+    }
+    if (!isLogin && (!formData.cep || !formData.street || !formData.city || !formData.state)) {
+      setError('Endereço incompleto.');
       return false;
     }
     if (!isLogin && formData.password !== formData.confirmPassword) {
@@ -62,12 +124,23 @@ const Auth = () => {
       const response = await api.post('/auth/register', {
         email: formData.email,
         password: formData.password,
-        fullName: formData.fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone.replace(/\D/g,'') || undefined,
+        cpf: formData.cpf.replace(/\D/g,''),
+        address: {
+          postalCode: formData.cep.replace(/\D/g,''),
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          country: 'Brazil',
+          addressLine2: formData.addressLine2 || undefined,
+        },
       });
 
       setSuccess('Cadastro realizado com sucesso! Redirecionando para login...');
       setError('');
-      setFormData({ email: '', password: '', confirmPassword: '', fullName: '' });
+      setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', cpf: '', cep: '', street: '', city: '', state: '', addressLine2: '' });
 
       // Redirecionar para login após 2 segundos
       setTimeout(() => {
@@ -100,9 +173,26 @@ const Auth = () => {
         isAuthenticated: true,
       });
 
+      const getCookie = (name) => {
+        const m = typeof document !== 'undefined' ? document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)')) : null;
+        return m ? m[1] : '';
+      };
+      const delCookie = (name) => { if (typeof document !== 'undefined') document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; };
+      const decodeCartCookie = (v) => { try { return JSON.parse(decodeURIComponent(atob(v))); } catch { return []; } };
+      const raw = getCookie('local_cart');
+      if (raw) {
+        const arr = decodeCartCookie(raw);
+        for (let i = 0; i < arr.length; i++) {
+          const it = arr[i];
+          try { await api.put('/cart', { productVariantId: it.productVariantId, quantity: Number(it.quantity || 1) }); } catch {}
+        }
+        delCookie('local_cart');
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
+      }
+
       setSuccess('Login realizado com sucesso!');
       setError('');
-      setFormData({ email: '', password: '', confirmPassword: '', fullName: '' });
+      setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', cpf: '', cep: '', street: '', city: '', state: '', addressLine2: '' });
 
       // Redirecionar para home após 1.5 segundos
       setTimeout(() => {
@@ -147,23 +237,49 @@ const Auth = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nome Completo (apenas registro) */}
           {!isLogin && (
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                Nome Completo
-              </label>
-              <div className="mt-1 relative">
-                <User className="absolute left-3 top-3 text-gray-400" size={18} />
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none"
-                  placeholder="Seu nome completo"
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">Nome</label>
+                <div className="mt-1 relative">
+                  <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleChange} className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" placeholder="Seu nome" />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Sobrenome</label>
+                <div className="mt-1 relative">
+                  <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleChange} className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" placeholder="Seu sobrenome" />
+                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefone</label>
+                <input id="phone" name="phone" type="text" value={formData.phone} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" placeholder="(99) 99999-9999" />
+              </div>
+              <div>
+                <label htmlFor="cpf" className="block text-sm font-medium text-gray-700">CPF</label>
+                <input id="cpf" name="cpf" type="text" value={formData.cpf} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" placeholder="000.000.000-00" />
+              </div>
+              <div>
+                <label htmlFor="cep" className="block text-sm font-medium text-gray-700">CEP</label>
+                <input id="cep" name="cep" type="text" value={formData.cep} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" placeholder="00000-000" />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="street" className="block text-sm font-medium text-gray-700">Rua</label>
+                <input id="street" name="street" type="text" value={formData.street} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" />
+              </div>
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700">Cidade</label>
+                <input id="city" name="city" type="text" value={formData.city} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" />
+              </div>
+              <div>
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700">Estado</label>
+                <input id="state" name="state" type="text" value={formData.state} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700">Complemento</label>
+                <input id="addressLine2" name="addressLine2" type="text" value={formData.addressLine2} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none" />
               </div>
             </div>
           )}
@@ -183,6 +299,7 @@ const Auth = () => {
                 onChange={handleChange}
                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none"
                 placeholder="seu@email.com"
+                autoComplete={isLogin ? 'email' : 'email'}
               />
             </div>
           </div>
@@ -202,6 +319,7 @@ const Auth = () => {
                 onChange={handleChange}
                 className="pl-10 pr-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-allure-gold focus:border-allure-gold outline-none"
                 placeholder="Mínimo 6 caracteres"
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
               />
               <button
                 type="button"
@@ -255,7 +373,7 @@ const Auth = () => {
                 setIsLogin(!isLogin);
                 setError('');
                 setSuccess('');
-                setFormData({ email: '', password: '', confirmPassword: '', fullName: '' });
+                setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', cpf: '', cep: '', street: '', city: '', state: '', addressLine2: '' });
               }}
               className="text-allure-gold font-semibold hover:underline"
             >

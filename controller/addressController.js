@@ -3,7 +3,8 @@ const { createAddress, findAllAddressesByUserId, updateAddress, deleteAddress } 
 
 const createAddressController = async (req, res) => {
   try {
-    const address = await createAddress(req.body);
+    const payload = { ...req.body, userId: req.user.id };
+    const address = await createAddress(payload);
     res.status(201).json(address);
   } catch (error) {
     res.status(500).json({ message: error.message });

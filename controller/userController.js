@@ -1,5 +1,5 @@
 
-const { findUserById } = require('../model/user');
+const { findUserById, updateUserById } = require('../model/user');
 
 const findUserByIdController = async (req, res) => {
   try {
@@ -15,4 +15,17 @@ const findUserByIdController = async (req, res) => {
 
 module.exports = {
   findUserByIdController,
+  updateUserByIdController: async (req, res) => {
+    try {
+      const allowed = ['firstName','lastName','phone','cpf'];
+      const data = {};
+      for (const k of allowed) {
+        if (req.body[k] !== undefined) data[k] = req.body[k];
+      }
+      const user = await updateUserById(req.user.id, data);
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
 };

@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
  * @access  Privado (Admin)
  */
 const createProductController = async (req, res) => {
-  const { name, description, brandId, categoryId, variants, images, basePrice } = req.body;
+  const { name, description, brandId, categoryId, variants, images, basePrice, isPromotional } = req.body;
 
   try {
     const newProduct = await prisma.$transaction(async (prisma) => {
@@ -18,7 +18,8 @@ const createProductController = async (req, res) => {
           description,
           brandId,
           categoryId,
-          basePrice, // garantir que venha no body ou setar valor padrão
+          basePrice,
+          isPromotional: Boolean(isPromotional),
           slug: name.toLowerCase().replace(/\s+/g, '-'),
         },
       });
@@ -74,7 +75,7 @@ const createProductController = async (req, res) => {
  */
 const updateProductController = async (req, res) => {
     const { id } = req.params;
-    const { name, description, brandId, categoryId, variants, images } = req.body;
+    const { name, description, brandId, categoryId, variants, images, isPromotional } = req.body;
   
     try {
       const updatedProduct = await prisma.$transaction(async (prisma) => {
@@ -87,6 +88,7 @@ const updateProductController = async (req, res) => {
             brandId,
             categoryId,
             slug: name ? name.toLowerCase().replace(/\s+/g, '-') : undefined,
+            isPromotional: typeof isPromotional === 'boolean' ? isPromotional : undefined,
           },
         });
   
@@ -115,7 +117,7 @@ const updateProductController = async (req, res) => {
             if (attributes && attributes.length > 0) {
               await prisma.productVariantAttributeValue.createMany({
                 data: attributes.map(attr => ({
-                  variantId: variant.id,
+                  productVariantId: variant.id,
                   attributeValueId: attr.attributeValueId,
                 })),
               });
@@ -166,7 +168,23 @@ const updateProductController = async (req, res) => {
  */
 const getAllProductsController = async (req, res) => {
   try {
+    const { q, categorySlug, brandId, promo } = req.query;
+    const where = {};
+    if (q && q.trim()) {
+      where.name = { contains: q.trim(), mode: 'insensitive' };
+    }
+    if (categorySlug && categorySlug.trim()) {
+      where.category = { slug: categorySlug.trim() };
+    }
+    if (brandId && brandId.trim()) {
+      where.brandId = brandId.trim();
+    }
+    if (promo === 'true') {
+      where.isPromotional = true;
+    }
+
     const products = await prisma.product.findMany({
+      where,
       // Inclui informações essenciais para a listagem de produtos
       include: {
         brand: true, // Marca do produto
@@ -314,12 +332,50 @@ const getProductBySlugController = async (req, res) => {
     }
   };
 
+/**
+ * @desc    Produtos em destaque: promoções ou mais vendidos
+ * @route   GET /api/products/featured
+ * @access  Público
+ */
+const getFeaturedProductsController = async (req, res) => {
+  try {
+    const { type } = req.query;
+    if (type === 'promo') {
+      const prods = await prisma.product.findMany({
+        where: { isPromotional: true },
+        include: { images: { orderBy: { priority: 'asc' } }, brand: true, category: true },
+        take: 8,
+      });
+      return res.status(200).json(prods);
+    }
+    const top = await prisma.orderItem.groupBy({
+      by: ['productVariantId'],
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: 8,
+    });
+    const variantIds = top.map(t => t.productVariantId);
+    if (variantIds.length === 0) return res.status(200).json([]);
+    const variants = await prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      include: { product: { include: { images: { orderBy: { priority: 'asc' } }, brand: true, category: true } } },
+    });
+    const products = variants.map(v => v.product);
+    const uniqueProducts = Array.from(new Map(products.map(p => [p.id, p])).values());
+    res.status(200).json(uniqueProducts);
+  } catch (error) {
+    console.error('Erro em produtos em destaque:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+};
+
 
 module.exports = {
   createProductController,
   getAllProductsController,
   getProductByIdController,
   getProductBySlugController,
+  getFeaturedProductsController,
   updateProductController,
   deleteProductController,
 };

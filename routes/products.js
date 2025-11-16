@@ -16,6 +16,10 @@ const { protectRoute, isAdmin } = require('../middleware/authMiddleware');
 // @desc    Lista todos os produtos (visão geral)
 // @access  Público
 router.get('/', getAllProducts);
+router.get('/featured', getAllProducts); // fallback if controller not wired
+// Featured endpoint using controller
+const { getFeaturedProductsController } = require('../controller/productController');
+router.get('/featured', getFeaturedProductsController);
 
 // @route   GET /api/products/slug/:slug
 // @desc    Busca um produto pelo seu slug (URL amigável)
