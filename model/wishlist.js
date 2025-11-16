@@ -10,8 +10,15 @@ const createWishlistItem = async (data) => {
 
 const findAllWishlistItemsByUserId = async (userId) => {
   const wishlistItems = await prisma.wishlistItem.findMany({
-    where: {
-      userId,
+    where: { userId },
+    include: {
+      product: {
+        include: {
+          brand: true,
+          category: true,
+          images: { orderBy: { priority: 'asc' } },
+        },
+      },
     },
   });
   return wishlistItems;

@@ -26,8 +26,17 @@ const findUserById = async (id) => {
   return user;
 };
 
+const updateUserById = async (id, data) => {
+  const user = await prisma.user.update({
+    where: { id },
+    data,
+  });
+  return user;
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
   findUserById,
+  updateUserById,
 };

@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import api from '../api/axiosConfig';
 import apiClient from '../api/axiosConfig';
 
 const ProductList = () => {
@@ -7,16 +9,22 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [params] = useSearchParams();
+  const [brands, setBrands] = useState([]);
+  const [promo, setPromo] = useState(params.get('promo') === 'true');
+  const [brandId, setBrandId] = useState(params.get('brandId') || '');
+  useEffect(() => { api.get('/brands').then(({data})=>setBrands(data||[])).catch(()=>setBrands([])); }, []);
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError('');
-        // Faz a requisição GET para a rota de produtos
-        const response = await apiClient.get('/products');
+        const q = params.get('q') || undefined;
+        const categorySlug = params.get('categorySlug') || undefined;
+        const response = await apiClient.get('/products', { params: { q, categorySlug, brandId: brandId || undefined, promo } });
         setProducts(response.data);
       } catch (err) {
-        setError('Não foi possível carregar os produtos. Tente novamente mais tarde.');
+        setError(err.response?.data?.message || 'Não foi possível carregar os produtos. Tente novamente mais tarde.');
         console.error('Erro ao buscar produtos:', err);
       } finally {
         setLoading(false);
@@ -24,7 +32,7 @@ const ProductList = () => {
     };
 
     fetchProducts();
-  }, []); // O array vazio assegura que o useEffect rode apenas uma vez, ao montar o componente
+  }, [params, brandId, promo]);
 
   if (loading) {
     return <div className="text-center p-10">Carregando produtos...</div>;
@@ -37,7 +45,18 @@ const ProductList = () => {
   return (
     <div className="bg-white">
       <div className="max-w-2xl px-4 py-16 mx-auto sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Nossos Produtos</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">Nossos Produtos</h2>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={promo} onChange={(e)=>setPromo(e.target.checked)} /> Promoções
+            </label>
+            <select value={brandId} onChange={(e)=>setBrandId(e.target.value)} className="border p-2 text-sm">
+              <option value="">Todas as marcas</option>
+              {brands.map(b=> (<option key={b.id} value={b.id}>{b.name}</option>))}
+            </select>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 mt-6 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
           {products.map((product) => (
@@ -53,10 +72,10 @@ const ProductList = () => {
               <div className="flex justify-between mt-4">
                 <div>
                   <h3 className="text-sm text-gray-700">
-                    <a href={`/products/${product.slug}`}>
+                    <Link to={`/products/${product.slug}`}>
                       <span aria-hidden="true" className="absolute inset-0" />
                       {product.name}
-                    </a>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">{product.category.name}</p>
                 </div>
