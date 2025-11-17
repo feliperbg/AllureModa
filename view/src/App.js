@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// Importa o Outlet para as rotas aninhadas
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'; 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -16,6 +17,9 @@ import FAQPage from './pages/FAQPage';
 import TradePolicyPage from './pages/TradePolicyPage';
 import TrackOrderPage from './pages/TrackOrderPage';
 import AccountPage from './pages/AccountPage';
+
+// Importa o novo layout de Admin
+import AdminLayout from './pages/admin/AdminLayout'; 
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductsAdmin from './pages/admin/ProductsAdmin';
 import CustomersAdmin from './pages/admin/CustomersAdmin';
@@ -24,6 +28,7 @@ import { AuthContext } from './context/AuthContext';
 function App() {
   const { auth } = useContext(AuthContext);
   const AdminOnly = ({ children }) => (auth?.user?.role === 'ADMIN' ? children : <div className="p-10 text-center">Acesso restrito ao administrador.</div>);
+
   return (
     <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <div className="flex flex-col min-h-screen">
@@ -46,9 +51,17 @@ function App() {
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/trade-politics" element={<TradePolicyPage />} />
             <Route path="/track-order" element={<TrackOrderPage />} />
-            <Route path="/admin" element={<AdminOnly><AdminDashboard /></AdminOnly>} />
-            <Route path="/admin/products" element={<AdminOnly><ProductsAdmin /></AdminOnly>} />
-            <Route path="/admin/customers" element={<AdminOnly><CustomersAdmin /></AdminOnly>} />
+
+            {/* *** ROTAS DE ADMIN ATUALIZADAS ***
+              Usamos rotas aninhadas. O AdminLayout é carregado para /admin
+              e o <Outlet /> dentro dele vai renderizar a rota filha correta.
+            */}
+            <Route path="/admin" element={<AdminOnly><AdminLayout /></AdminOnly>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<ProductsAdmin />} />
+              <Route path="customers" element={<CustomersAdmin />} />
+            </Route>
+            
             {/* Adicione mais rotas conforme necessário */}
           </Routes>
         </main>

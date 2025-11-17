@@ -1,6 +1,20 @@
 import React from 'react';
 import api from '../../api/axiosConfig';
 import Chart from '../../components/Chart';
+import { Users, Package, CreditCard, DollarSign } from 'lucide-react';
+
+// Componente de Card de Estatística
+const StatCard = ({ title, value, icon, unit = '' }) => (
+  <div className="bg-white rounded-xl shadow-lg p-6 flex items-center gap-4 transition-all hover:shadow-xl">
+    <div className="p-3 bg-allure-beige rounded-full">
+      {icon}
+    </div>
+    <div>
+      <div className="text-sm font-medium text-allure-grey">{title}</div>
+      <div className="text-2xl font-bold text-allure-black">{unit}{value}</div>
+    </div>
+  </div>
+);
 
 function AdminDashboard() {
   const [stats, setStats] = React.useState(null);
@@ -10,33 +24,46 @@ function AdminDashboard() {
     api.get('/admin/stats').then(function({ data }) { setStats(data); }).catch(function(err) { setError(err.response?.data?.message || 'Falha ao carregar estatísticas'); });
   }, []);
 
-  if (error) return <div className="p-10 text-center">{error}</div>;
-  if (!stats) return <div className="p-10 text-center">Carregando...</div>;
+  if (error) return <div className="p-10 text-center text-red-600">{error}</div>;
+  if (!stats) return <div className="p-10 text-center text-allure-grey">Carregando...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-semibold">Painel Administrativo</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="border p-4"><div className="text-sm text-gray-600">Usuários</div><div className="text-2xl">{stats.users}</div></div>
-        <div className="border p-4"><div className="text-sm text-gray-600">Produtos</div><div className="text-2xl">{stats.products}</div></div>
-        <div className="border p-4"><div className="text-sm text-gray-600">Pedidos</div><div className="text-2xl">{stats.orders}</div></div>
-        <div className="border p-4"><div className="text-sm text-gray-600">Receita</div><div className="text-2xl">R$ {Number(stats.revenue || 0).toFixed(2)}</div></div>
+    // Removemos o max-w-7xl, etc. O AdminLayout cuida disso.
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold font-serif text-allure-black">Dashboard</h1>
+      
+      {/* Cards de Estatística Modernizados */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Usuários" value={stats.users} icon={<Users className="w-6 h-6 text-allure-black" />} />
+        <StatCard title="Produtos" value={stats.products} icon={<Package className="w-6 h-6 text-allure-black" />} />
+        <StatCard title="Pedidos" value={stats.orders} icon={<CreditCard className="w-6 h-6 text-allure-black" />} />
+        <StatCard title="Receita" value={Number(stats.revenue || 0).toFixed(2)} unit="R$ " icon={<DollarSign className="w-6 h-6 text-allure-black" />} />
       </div>
+      
+      {/* Gráficos (assumindo que o Chart existe) */}
       {stats.charts && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Chart type="line" data={stats.charts.users} title="Novos usuários (30 dias)" />
-          <Chart type="bar" data={stats.charts.orders} title="Pedidos (30 dias)" />
-          <Chart type="line" data={stats.charts.revenue} title="Receita (30 dias)" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <Chart type="line" data={stats.charts.users} title="Novos usuários (30 dias)" />
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <Chart type="bar" data={stats.charts.orders} title="Pedidos (30 dias)" />
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-2">
+            <Chart type="line" data={stats.charts.revenue} title="Receita (30 dias)" />
+          </div>
         </div>
       )}
-      <div>
-        <h2 className="font-semibold mb-2">Mais vendidos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      
+      {/* Mais Vendidos */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-semibold text-allure-black mb-4">Mais vendidos</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {stats.topProducts.map(function(p) {
             return (
-              <div key={p.id} className="border p-3">
-                <div className="font-medium">{p.name}</div>
-                <div className="text-sm text-gray-600">{p.category?.name}</div>
+              <div key={p.id} className="border border-gray-200 rounded-lg p-4 transition-all hover:shadow-md">
+                <div className="font-semibold text-allure-black">{p.name}</div>
+                <div className="text-sm text-allure-grey">{p.category?.name}</div>
               </div>
             );
           })}
