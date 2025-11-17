@@ -92,21 +92,46 @@ const updateProductController = async (req, res) => {
           },
         });
   
-        // Lógica para atualizar/remover/adicionar imagens e variantes
-        // (Esta parte pode ser complexa e depende da estratégia: substituir tudo ou fazer diff)
-  
-        // Exemplo: Remover imagens e variantes antigas e criar as novas
+        // 2. Lidar com a atualização de variantes e imagens
+        // Estratégia: Remover e recriar, mas com verificações de segurança.
+
+        // Obter IDs das variantes existentes para este produto
+        const variantsInDb = await prisma.productVariant.findMany({
+          where: { productId: id },
+          select: { id: true },
+        });
+        const variantIdsInDb = variantsInDb.map(v => v.id);
+
+        if (variantIdsInDb.length > 0) {
+          // Verificar se alguma variante está em um pedido existente
+          const orderItemsCount = await prisma.orderItem.count({
+            where: { productVariantId: { in: variantIdsInDb } },
+          });
+
+          if (orderItemsCount > 0) {
+            // Se estiver em um pedido, não podemos deletar. Lançar um erro.
+            // Uma implementação mais robusta poderia desativar as variantes em vez de deletar.
+            throw new Error('Não é possível atualizar o produto pois uma ou mais de suas variantes fazem parte de um pedido existente.');
+          }
+
+          // Se não estiver em pedidos, podemos remover dos carrinhos dos usuários
+          await prisma.cartItem.deleteMany({
+            where: { productVariantId: { in: variantIdsInDb } },
+          });
+        }
+        
+        // Agora que as dependências foram tratadas, podemos deletar as variantes e imagens antigas
+        await prisma.productVariant.deleteMany({ where: { productId: id } });
         await prisma.productImage.deleteMany({ where: { productId: id } });
-        await prisma.productVariant.deleteMany({ where: { productId: id } }); // Cuidado com FKs
   
-        // Recriar imagens
+        // 3. Recriar imagens
         if (images && images.length > 0) {
           await prisma.productImage.createMany({
             data: images.map(img => ({ ...img, productId: product.id })),
           });
         }
   
-        // Recriar variantes
+        // 4. Recriar variantes
         if (variants && variants.length > 0) {
           for (const variantData of variants) {
             const { attributes, ...variantDetails } = variantData;
@@ -126,12 +151,19 @@ const updateProductController = async (req, res) => {
         }
   
         return product;
+      }, {
+        maxWait: 10000, // Aumenta o tempo de espera da transação
+        timeout: 20000, // Aumenta o timeout da transação
       });
   
       res.status(200).json(updatedProduct);
     } catch (error) {
       console.error(`Erro ao atualizar produto ${id}:`, error);
-      res.status(500).json({ message: 'Erro interno do servidor ao atualizar o produto.' });
+      // Enviar uma mensagem de erro mais amigável para o front-end
+      const userMessage = error.message.includes('pedido existente')
+        ? error.message
+        : 'Erro interno do servidor ao atualizar o produto.';
+      res.status(500).json({ message: userMessage });
     }
   };
   
@@ -331,7 +363,6 @@ const getProductBySlugController = async (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor.' });
     }
   };
-
 /**
  * @desc    Produtos em destaque: promoções ou mais vendidos
  * @route   GET /api/products/featured
@@ -340,6 +371,8 @@ const getProductBySlugController = async (req, res) => {
 const getFeaturedProductsController = async (req, res) => {
   try {
     const { type } = req.query;
+
+    // Lógica para PROMOÇÃO
     if (type === 'promo') {
       const prods = await prisma.product.findMany({
         where: { isPromotional: true },
@@ -348,27 +381,35 @@ const getFeaturedProductsController = async (req, res) => {
       });
       return res.status(200).json(prods);
     }
+
     const top = await prisma.orderItem.groupBy({
       by: ['productVariantId'],
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
       take: 8,
     });
+
     const variantIds = top.map(t => t.productVariantId);
-    if (variantIds.length === 0) return res.status(200).json([]);
+    if (variantIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: variantIds } },
       include: { product: { include: { images: { orderBy: { priority: 'asc' } }, brand: true, category: true } } },
     });
+
+    // Mapeia para produtos e remove duplicatas (caso 2 variantes do mesmo produto sejam top)
     const products = variants.map(v => v.product);
     const uniqueProducts = Array.from(new Map(products.map(p => [p.id, p])).values());
+    
     res.status(200).json(uniqueProducts);
+
   } catch (error) {
     console.error('Erro em produtos em destaque:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
-
 
 module.exports = {
   createProductController,
