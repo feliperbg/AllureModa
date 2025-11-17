@@ -75,8 +75,8 @@ function ProductsAdmin() {
       const payload = {
         ...form,
         basePrice: Number(form.basePrice),
-        brandId: form.brandId ? Number(form.brandId) : null,
-        categoryId: form.categoryId ? Number(form.categoryId) : null,
+        brandId: form.brandId || null,
+        categoryId: form.categoryId || null,
         variants: form.variants.map(v => ({
           ...v,
           price: Number(v.price),

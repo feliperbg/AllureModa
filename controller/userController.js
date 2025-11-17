@@ -17,7 +17,7 @@ module.exports = {
   findUserByIdController,
   updateUserByIdController: async (req, res) => {
     try {
-      const allowed = ['firstName','lastName','phone','cpf'];
+      const allowed = ['firstName','lastName','phone','cpf','birthDate'];
       const data = {};
       for (const k of allowed) {
         if (req.body[k] !== undefined) data[k] = req.body[k];
