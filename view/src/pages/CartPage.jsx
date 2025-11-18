@@ -196,7 +196,9 @@ const CartPage = () => {
                 <div className="flex-1">
                   <div className="text-sm text-gray-500">{it.product?.brand?.name}</div>
                   <div className="font-medium">{it.product?.name}</div>
-                  {/*<div className="text-sm text-gray-600">{it.product?.variant}</div>*/}
+                  <div className="text-sm text-gray-600">
+                    {it.variant?.attributes?.map(a => a.attributeValue.attribute.name + ': ' + a.attributeValue.value).join(' / ')}
+                  </div>
                   <div className="text-sm text-gray-600">SKU {it.variant?.sku}</div>
                 </div>
                 <div className="flex items-center gap-3">

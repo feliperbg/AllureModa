@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import api from '../api/axiosConfig';
 
-const FeaturedProducts = ({ type = 'top' }) => {
+const FeaturedProducts = ({ type }) => {
   const [products, setProducts] = React.useState([]);
   const [error, setError] = React.useState('');
   React.useEffect(() => {
@@ -12,7 +12,7 @@ const FeaturedProducts = ({ type = 'top' }) => {
       setProducts(Array.isArray(data) ? data : []);
     }).catch(()=>setError('Falha ao carregar destaques'));
   }, [type]);
-
+ 
   return (
     <section className="py-20 bg-allure-beige">
       <div className="container mx-auto px-4">

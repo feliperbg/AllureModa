@@ -58,20 +58,22 @@ const Navbar = () => {
   return (
     <nav className="bg-white sticky top-0 z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden text-gray-900"
-            aria-label="Menu"
-          >
-            <Menu size={22} />
-          </button>
+        <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center h-16">
+          <div className="flex items-center">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden text-gray-900"
+              aria-label="Menu"
+            >
+              <Menu size={22} />
+            </button>
+          </div>
 
-          <Link to="/" className="absolute left-1/2 -translate-x-1/2 select-none">
-            <span className="text-2xl sm:text-3xl tracking-widest font-semibold text-gray-900">ALLURE MODA</span>
+          <Link to="/" className="justify-self-center select-none block w-full max-w-[58vw] md:max-w-none text-center">
+            <span className="truncate md:whitespace-normal text-base sm:text-2xl md:text-3xl tracking-wide sm:tracking-widest font-semibold text-gray-900">ALLURE MODA</span>
           </Link>
 
-          <div className="flex items-center gap-4 text-gray-900">
+          <div className="flex items-center justify-self-end gap-3 sm:gap-4 text-gray-900">
             <Link to="/search" aria-label="Buscar" title="Buscar" className="hover:opacity-70">
               <Search size={20} />
             </Link>
