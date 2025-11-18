@@ -6,7 +6,7 @@ const Hero = () => {
     <section 
       className="relative h-[80vh] w-full bg-cover bg-center" 
       // Substitua por uma imagem real de alta qualidade
-      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1574695026980-a2491b312015?q=80&w=2070')" }}
+      style={{ backgroundImage: "url('https://www.chanel.com/puls-img/c_limit,w_1920/q_auto:good,dpr_auto,f_auto/1761661153726-ww-homepage-corpo-one-desktop_1255x2880.png')" }}
     >
       {/* Overlay escuro para melhor legibilidade do texto */}
       <div className="absolute inset-0 bg-black bg-opacity-20" />
@@ -18,7 +18,7 @@ const Hero = () => {
         <p className="mt-4 text-lg max-w-lg font-sans">
           Descubra peças que causam impacto com qualidade premium.
         </p>
-        <button className="mt-8 bg-allure-black text-white font-sans font-bold py-3 px-10 tracking-wide transition-all hover:bg-gray-800">
+        <button onClick={""} className="mt-8 bg-allure-black text-white font-sans font-bold py-3 px-10 tracking-wide transition-all hover:bg-gray-800">
           Conheça a Coleção
         </button>
       </div>

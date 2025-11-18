@@ -382,6 +382,12 @@ const getFeaturedProductsController = async (req, res) => {
       return res.status(200).json(prods);
     }
 
+    // const top = await prisma.product.findMany({
+    //       include: { images: { orderBy: { priority: 'asc' } }, brand: true, category: true },
+    //       take: 8,
+    //       orderBy: { createdAt: 'desc' } // Opcional: pegar os mais recentes
+    // });
+
     const top = await prisma.orderItem.groupBy({
       by: ['productVariantId'],
       _sum: { quantity: true },
@@ -393,18 +399,18 @@ const getFeaturedProductsController = async (req, res) => {
     if (variantIds.length === 0) {
       return res.status(200).json([]);
     }
-
+    
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: variantIds } },
       include: { product: { include: { images: { orderBy: { priority: 'asc' } }, brand: true, category: true } } },
     });
 
-    // Mapeia para produtos e remove duplicatas (caso 2 variantes do mesmo produto sejam top)
+    //Mapeia para produtos e remove duplicatas (caso 2 variantes do mesmo produto sejam top)
     const products = variants.map(v => v.product);
     const uniqueProducts = Array.from(new Map(products.map(p => [p.id, p])).values());
-    
-    res.status(200).json(uniqueProducts);
 
+    res.status(200).json(uniqueProducts);
+    // res.status(200).json(top);
   } catch (error) {
     console.error('Erro em produtos em destaque:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
