@@ -25,5 +25,8 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  // Adiciona o plugin de formulários para um visual mais moderno
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }
