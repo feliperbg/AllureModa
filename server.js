@@ -66,8 +66,15 @@ app.use((err, req, res, next) => {
 });
 
 // Inicialização do Servidor
+// Inicialização do Servidor
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Servidor de API rodando na porta ${PORT}`);
-  console.log(`CORS configurado para aceitar requisições de: ${process.env.FRONTEND_URL}`);
-});
+
+// Apenas inicia o servidor se não estiver rodando no Vercel (ou outro ambiente serverless que exporta o app)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Servidor de API rodando na porta ${PORT}`);
+    console.log(`CORS configurado para aceitar requisições de: ${process.env.FRONTEND_URL}`);
+  });
+}
+
+module.exports = app;
