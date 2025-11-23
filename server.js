@@ -14,9 +14,23 @@ const app = express();
 
 // Configuração do CORS
 const corsOptions = {
-  origin: process.env.FRONTEND_URL, // Apenas a origem do frontend é permitida
+  origin: function (origin, callback) {
+    // Permitir requisições sem origem (como apps mobile ou curl)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [process.env.FRONTEND_URL];
+    
+    // Verifica se a origem está na lista permitida, é uma preview do Vercel ou é localhost
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || origin.includes('localhost')) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin); // Log para debug
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true, // Essencial para permitir o envio de cookies
 };
+
 
 app.use(cors(corsOptions));
 
