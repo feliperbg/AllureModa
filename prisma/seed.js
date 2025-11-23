@@ -2,6 +2,8 @@ require('dotenv').config();
 const { prisma } = require('./client');
 const bcrypt = require('bcryptjs');
 
+// --- FUNÇÕES DE UPSERT (Já existentes) ---
+
 async function upsertBrand(name, slug, logoUrl) {
   return prisma.brand.upsert({
     where: { slug },
@@ -101,9 +103,106 @@ async function createAdminUser() {
       firstName: 'Admin',
       lastName: 'User',
       role: 'ADMIN',
+      phone: '11999998888',
+      cpf: '12345678900',
     },
   });
 }
+
+// --- NOVAS FUNÇÕES DE SEED (Dados Faltantes) ---
+
+async function createAdminAddress(adminId) {
+  const existing = await prisma.address.findFirst({ where: { userId: adminId } });
+  if (existing) return existing;
+
+  console.log('Criando endereço para o admin...');
+  return prisma.address.create({
+    data: {
+      street: 'Rua da Loja',
+      city: 'São Paulo',
+      state: 'SP',
+      postalCode: '01000-000',
+      country: 'Brasil',
+      addressLine2: 'Admin',
+      type: 'SHIPPING',
+      userId: adminId,
+    },
+  });
+}
+
+async function createAdminCart(adminId) {
+  const existing = await prisma.cart.findUnique({ where: { userId: adminId } });
+  if (existing) return existing;
+
+  console.log('Criando carrinho para o admin...');
+  return prisma.cart.create({
+    data: {
+      userId: adminId,
+    },
+  });
+}
+
+async function createAdminReview(adminId, productId) {
+  const existing = await prisma.review.findUnique({ where: { userId_productId: { userId: adminId, productId } } });
+  if (existing) return existing;
+
+  console.log('Criando review para o produto 1...');
+  return prisma.review.create({
+    data: {
+      rating: 5,
+      comment: 'Adorei este produto! Qualidade excelente.',
+      userId: adminId,
+      productId: productId,
+    },
+  });
+}
+
+async function createAdminWishlist(adminId, productId) {
+  const existing = await prisma.wishlistItem.findUnique({ where: { userId_productId: { userId: adminId, productId } } });
+  if (existing) return existing;
+
+  console.log('Adicionando produto 2 à wishlist...');
+  return prisma.wishlistItem.create({
+    data: {
+      userId: adminId,
+      productId: productId,
+    },
+  });
+}
+
+async function createSampleOrder(adminId, addressId, variant) {
+  const existing = await prisma.order.findFirst({ where: { userId: adminId } });
+  if (existing) return existing;
+
+  console.log('Criando pedido de teste...');
+  const subTotal = variant.price;
+  const shippingFee = 15.00;
+  const totalPrice = parseFloat(subTotal) + shippingFee;
+
+  return prisma.order.create({
+    data: {
+      status: 'PAID',
+      subTotal: subTotal,
+      shippingFee: shippingFee,
+      totalPrice: totalPrice,
+      userId: adminId,
+      shippingAddressId: addressId,
+      billingAddressId: addressId,
+      items: {
+        create: [
+          {
+            quantity: 1,
+            priceAtPurchase: variant.price,
+            productVariantId: variant.id,
+          },
+        ],
+      },
+    },
+  });
+}
+
+
+// --- FUNÇÃO PRINCIPAL (MAIN) ---
 
 async function main() {
   console.log('Iniciando seed...');
@@ -142,7 +241,7 @@ async function main() {
     ],
   });
 
-  await createVariantWithAttributes(produto1.id, 'VF-VER-P', '219.90', 12, [avVermelho.id, avP.id]);
+  const p1v1 = await createVariantWithAttributes(produto1.id, 'VF-VER-P', '219.90', 12, [avVermelho.id, avP.id]);
   await createVariantWithAttributes(produto1.id, 'VF-VER-M', '219.90', 8, [avVermelho.id, avM.id]);
   await createVariantWithAttributes(produto1.id, 'VF-AZU-G', '219.90', 5, [avAzul.id, avG.id]);
 
@@ -166,6 +265,18 @@ async function main() {
   // Admin
   const admin = await createAdminUser();
   console.log('Admin:', admin.email, admin.role);
+
+  // --- Adicionando dados extras ---
+  console.log('Criando dados adicionais para o admin...');
+  const adminAddress = await createAdminAddress(admin.id);
+  await createAdminCart(admin.id);
+  await createAdminReview(admin.id, produto1.id);
+  await createAdminWishlist(admin.id, produto2.id);
+  
+  // Cria um pedido com a primeira variante do produto 1
+  if (p1v1) {
+    await createSampleOrder(admin.id, adminAddress.id, p1v1);
+  }
 
   console.log('Seed concluído.');
 }
