@@ -1,12 +1,14 @@
 // Este é o datasource e o generator.
 // Certifique-se de que a variável DATABASE_URL em seu .env aponta para um banco PostgreSQL.
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
 
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // --- ENUMS ---
