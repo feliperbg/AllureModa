@@ -10,6 +10,7 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+        
 
 // --- ENUMS ---
 // Enums ajudam a padronizar valores de campos específicos.

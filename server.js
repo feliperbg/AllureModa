@@ -80,8 +80,7 @@ app.use((err, req, res, next) => {
 });
 
 // Inicialização do Servidor
-// Inicialização do Servidor
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.BACKEND_PORT || 3001;
 
 // Apenas inicia o servidor se não estiver rodando no Vercel (ou outro ambiente serverless que exporta o app)
 if (require.main === module) {
