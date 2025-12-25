@@ -53,33 +53,34 @@ npx prisma db push
 
 Agora você tem comandos facilitados para alternar entre "Modo Local" e "Modo Produção".
 
+### Opção Mais Fácil: Comando Unificado (Recomendado)
+
+Você também pode rodar **Backend e Frontend** com um único comando no terminal da raiz:
+
+*   **Modo Local Unificado** (Tudo local):
+    ```bash
+    npm run dev:full:local
+    ```
+    *Abre servidor e site simultaneamente.*
+
+*   **Modo Prod Unificado**:
+    ```bash
+    npm run dev:full:prod
+    ```
+
+---
+
+### Opção Manual (Terminais Separados)
+
+Se preferir rodar separadamente para ver os logs melhor:
+
 ### Backend (Pasta Raiz)
-
-*   **Modo Local** (Usa `.env.development`):
-    ```bash
-    npm run dev:local
-    ```
-    *Roda servidor na porta 3001 e aceita conexões do localhost:3000.*
-
-*   **Modo Produção/Teste** (Usa `.env.production`):
-    ```bash
-    npm run dev:prod
-    ```
-    *Roda servidor na porta 3001, mas configurado como se estivesse em produção (CORS aceita Vercel).*
+*   **Modo Local**: `npm run dev:local`
+*   **Modo Prod**: `npm run dev:prod`
 
 ### Frontend (Pasta `view`)
-
-*   **Modo Local** (Conecta ao Backend Local):
-    ```bash
-    npm run start:local
-    ```
-    *Abre o site em localhost:3000 e tenta conectar na API em localhost:3001.*
-
-*   **Modo Produção** (Conecta ao Backend na Nuvem):
-    ```bash
-    npm run start:prod
-    ```
-    *Abre o site em localhost:3000, mas faz requisições direto para `https://alluremoda.onrender.com`.*
+*   **Modo Local**: `npm run start:local`
+*   **Modo Prod**: `npm run start:prod`
 
 
 ---

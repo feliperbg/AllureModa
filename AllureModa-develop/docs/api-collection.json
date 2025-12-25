@@ -1,0 +1,421 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-11-11T14:00:00.000Z",
+  "__export_source": "gemini-cli",
+  "resources": [
+    {
+      "_id": "wrk_1",
+      "_type": "workspace",
+      "name": "AllureModa API",
+      "description": "",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_1",
+      "_type": "environment",
+      "parentId": "wrk_1",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3001/api"
+      }
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Auth"
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register User",
+      "url": "{{ base_url }}/auth/register",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Test User\",\n\t\"email\": \"test@example.com\",\n\t\"password\": \"password123\"\n}"
+      }
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login User",
+      "url": "{{ base_url }}/auth/login",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"email\": \"test@example.com\",\n\t\"password\": \"password123\"\n}"
+      }
+    },
+    {
+      "_id": "req_logout",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Logout User",
+      "url": "{{ base_url }}/auth/logout",
+      "method": "POST"
+    },
+    {
+      "_id": "req_getMe",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Get Authenticated User",
+      "url": "{{ base_url }}/auth/me",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "fld_products",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Products"
+    },
+    {
+      "_id": "req_getAllProducts",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Get All Products",
+      "url": "{{ base_url }}/products",
+      "method": "GET"
+    },
+    {
+      "_id": "req_getProductBySlug",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Get Product By Slug",
+      "url": "{{ base_url }}/products/slug/:slug",
+      "method": "GET"
+    },
+    {
+      "_id": "req_getProductById",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Get Product By ID",
+      "url": "{{ base_url }}/products/:id",
+      "method": "GET"
+    },
+    {
+      "_id": "req_createProduct",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Create Product (Admin)",
+      "url": "{{ base_url }}/products",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"New Product\",\n\t\"description\": \"A great new product\",\n\t\"price\": 99.99\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_updateProduct",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Update Product (Admin)",
+      "url": "{{ base_url }}/products/:id",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Updated Product Name\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_deleteProduct",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Delete Product (Admin)",
+      "url": "{{ base_url }}/products/:id",
+      "method": "DELETE",
+      "authentication": {}
+    },
+    {
+      "_id": "fld_addresses",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Addresses"
+    },
+    {
+      "_id": "req_createAddress",
+      "_type": "request",
+      "parentId": "fld_addresses",
+      "name": "Create Address",
+      "url": "{{ base_url }}/addresses",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"street\": \"123 Main St\",\n\t\"city\": \"Anytown\",\n\t\"postalCode\": \"12345\",\n\t\"country\": \"USA\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getAddresses",
+      "_type": "request",
+      "parentId": "fld_addresses",
+      "name": "Get User Addresses",
+      "url": "{{ base_url }}/addresses",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "req_updateAddress",
+      "_type": "request",
+      "parentId": "fld_addresses",
+      "name": "Update Address",
+      "url": "{{ base_url }}/addresses/:id",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"street\": \"456 Oak Ave\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_deleteAddress",
+      "_type": "request",
+      "parentId": "fld_addresses",
+      "name": "Delete Address",
+      "url": "{{ base_url }}/addresses/:id",
+      "method": "DELETE",
+      "authentication": {}
+    },
+    {
+      "_id": "fld_brands",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Brands"
+    },
+    {
+      "_id": "req_createBrand",
+      "_type": "request",
+      "parentId": "fld_brands",
+      "name": "Create Brand (Admin)",
+      "url": "{{ base_url }}/brands",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Awesome Brand\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getBrands",
+      "_type": "request",
+      "parentId": "fld_brands",
+      "name": "Get All Brands",
+      "url": "{{ base_url }}/brands",
+      "method": "GET"
+    },
+    {
+      "_id": "req_getBrandById",
+      "_type": "request",
+      "parentId": "fld_brands",
+      "name": "Get Brand By ID",
+      "url": "{{ base_url }}/brands/:id",
+      "method": "GET"
+    },
+    {
+      "_id": "fld_cart",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Cart"
+    },
+    {
+      "_id": "req_createCart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "Create Cart",
+      "url": "{{ base_url }}/cart",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"items\": []\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getCart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "Get User Cart",
+      "url": "{{ base_url }}/cart",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "req_updateCart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "Update User Cart",
+      "url": "{{ base_url }}/cart",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"items\": [{\"productId\": 1, \"quantity\": 2}]\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "fld_categories",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Categories"
+    },
+    {
+      "_id": "req_createCategory",
+      "_type": "request",
+      "parentId": "fld_categories",
+      "name": "Create Category (Admin)",
+      "url": "{{ base_url }}/categories",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"New Category\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getCategories",
+      "_type": "request",
+      "parentId": "fld_categories",
+      "name": "Get All Categories",
+      "url": "{{ base_url }}/categories",
+      "method": "GET"
+    },
+    {
+      "_id": "req_getCategoryById",
+      "_type": "request",
+      "parentId": "fld_categories",
+      "name": "Get Category By ID",
+      "url": "{{ base_url }}/categories/:id",
+      "method": "GET"
+    },
+    {
+      "_id": "fld_orders",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Orders"
+    },
+    {
+      "_id": "req_createOrder",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "Create Order",
+      "url": "{{ base_url }}/orders",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"addressId\": 1,\n\t\"items\": [{\"productId\": 1, \"quantity\": 1}]\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getOrders",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "Get User Orders",
+      "url": "{{ base_url }}/orders",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "req_getOrderById",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "Get Order By ID",
+      "url": "{{ base_url }}/orders/:id",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "fld_reviews",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Reviews"
+    },
+    {
+      "_id": "req_createReview",
+      "_type": "request",
+      "parentId": "fld_reviews",
+      "name": "Create Review",
+      "url": "{{ base_url }}/reviews",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"productId\": 1,\n\t\"rating\": 5,\n\t\"comment\": \"Excellent!\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getReviewsByProduct",
+      "_type": "request",
+      "parentId": "fld_reviews",
+      "name": "Get Reviews For Product",
+      "url": "{{ base_url }}/reviews/product/:productId",
+      "method": "GET"
+    },
+    {
+      "_id": "fld_users",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Users"
+    },
+    {
+      "_id": "req_getUserProfile",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Get User Profile",
+      "url": "{{ base_url }}/users/me",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "fld_wishlist",
+      "_type": "request_group",
+      "parentId": "wrk_1",
+      "name": "Wishlist"
+    },
+    {
+      "_id": "req_addToWishlist",
+      "_type": "request",
+      "parentId": "fld_wishlist",
+      "name": "Add to Wishlist",
+      "url": "{{ base_url }}/wishlist",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"productId\": 1\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_getWishlist",
+      "_type": "request",
+      "parentId": "fld_wishlist",
+      "name": "Get User Wishlist",
+      "url": "{{ base_url }}/wishlist",
+      "method": "GET",
+      "authentication": {}
+    },
+    {
+      "_id": "req_deleteFromWishlist",
+      "_type": "request",
+      "parentId": "fld_wishlist",
+      "name": "Delete from Wishlist",
+      "url": "{{ base_url }}/wishlist/:id",
+      "method": "DELETE",
+      "authentication": {}
+    },
+    {
+      "_id": "req_healthCheck",
+      "_type": "request",
+      "parentId": "wrk_1",
+      "name": "Health Check",
+      "url": "{{ base_url }}/health",
+      "method": "GET"
+    }
+  ]
+}
