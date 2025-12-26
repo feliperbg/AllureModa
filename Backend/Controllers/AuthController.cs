@@ -1,5 +1,6 @@
 using AllureModa.API.DTOs;
 using AllureModa.API.Services;
+using AllureModa.API.Services.Email;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
@@ -11,11 +12,13 @@ namespace AllureModa.API.Controllers
     {
         private readonly AuthService _authService;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public AuthController(AuthService authService, IConfiguration configuration)
+        public AuthController(AuthService authService, IConfiguration configuration, IEmailService emailService)
         {
             _authService = authService;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         [AllowAnonymous]
@@ -48,6 +51,16 @@ namespace AllureModa.API.Controllers
                 
                 // Set JWT in HttpOnly cookie
                 SetTokenCookie(response.Token);
+                
+                // Send Welcome Email
+                try
+                {
+                    await _emailService.SendWelcomeEmailAsync(response.User);
+                }
+                catch
+                {
+                    // Non-blocking
+                }
                 
                 return CreatedAtAction(nameof(Login), new { id = response.User.Id }, 
                     new { user = response.User, message = "Registration successful" });
@@ -117,6 +130,43 @@ namespace AllureModa.API.Controllers
         }
         
 
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var user = await _authService.GenerateResetTokenAsync(request.Email);
+            if (user != null)
+            {
+                // Send email
+                try
+                {
+                    await _emailService.SendPasswordResetAsync(user, user.PasswordResetToken!);
+                }
+                catch
+                {
+                    // Log error but don't fail for user
+                }
+            }
+
+            // Always return Ok to prevent email enumeration
+            return Ok(new { message = "If the email exists, a reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            try
+            {
+                await _authService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
+                return Ok(new { message = "Password reset successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         private void SetTokenCookie(string token)
         {

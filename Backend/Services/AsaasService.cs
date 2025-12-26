@@ -1,21 +1,21 @@
 using AllureModa.API.Models;
+using AllureModa.API.Controllers;
+using AllureModa.API.DTOs;
 using System.Text;
 using System.Text.Json;
 
 namespace AllureModa.API.Services
 {
-    public class AsaasService
+    public class AsaasService : IAsaasService
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
 
-        public AsaasService(IConfiguration configuration)
+        public AsaasService(HttpClient httpClient, IConfiguration configuration)
         {
             _apiKey = configuration["Asaas:ApiKey"] ?? throw new Exception("Asaas API Key not configured");
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(configuration["Asaas:BaseUrl"] ?? "https://sandbox.asaas.com/api/v3/")
-            };
+            _httpClient = httpClient;
+            _httpClient.BaseAddress = new Uri(configuration["Asaas:BaseUrl"] ?? "https://sandbox.asaas.com/api/v3/");
             _httpClient.DefaultRequestHeaders.Add("access_token", _apiKey);
         }
 
@@ -40,7 +40,14 @@ namespace AllureModa.API.Services
             return json.RootElement.GetProperty("id").GetString()!;
         }
 
-        public async Task<JsonElement> CreatePaymentAsync(string customerId, Order order, PaymentMethod method, string? creditCardToken)
+        public async Task<JsonElement> CreatePaymentAsync(
+            string customerId, 
+            Order order, 
+            PaymentMethod method, 
+            string? creditCardToken,
+            CreditCardDto? creditCard = null,
+            User? holderInfo = null,
+            Address? billingAddress = null)
         {
             var billingType = method switch
             {
@@ -58,7 +65,28 @@ namespace AllureModa.API.Services
                 dueDate = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"),
                 externalReference = order.Id,
                 description = $"Pedido #{order.Id} - AllureModa",
-                creditCardToken = creditCardToken // Only for credit card
+                
+                // Credit Card specific fields
+                creditCardToken = creditCardToken,
+                creditCard = creditCard != null ? new
+                {
+                    holderName = creditCard.HolderName,
+                    number = creditCard.Number,
+                    expiryMonth = creditCard.ExpiryMonth,
+                    expiryYear = creditCard.ExpiryYear,
+                    ccv = creditCard.Ccv
+                } : null,
+                creditCardHolderInfo = (creditCard != null && holderInfo != null && billingAddress != null) ? new
+                {
+                    name = $"{holderInfo.FirstName} {holderInfo.LastName}",
+                    email = holderInfo.Email,
+                    cpfCnpj = holderInfo.Cpf,
+                    postalCode = billingAddress.PostalCode,
+                    addressNumber = billingAddress.Number,
+                    addressComplement = billingAddress.AddressLine2,
+                    phone = holderInfo.Phone,
+                    mobilePhone = holderInfo.Phone
+                } : null
             };
 
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");

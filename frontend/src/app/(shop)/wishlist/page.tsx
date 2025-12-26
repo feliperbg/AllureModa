@@ -1,106 +1,128 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Trash2, Loader2 } from "lucide-react";
-import { useWishlist, useRemoveFromWishlist } from "@/hooks/useCustomer";
-import { useState } from "react";
+import { Heart, Trash2, ShoppingBag, Loader2 } from "lucide-react";
+import { useWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
+import { useAddToCart } from "@/hooks/useCart";
+import { getImageUrl } from "@/components/shop/ProductImage";
+import { ProductGridSkeleton } from "@/components/ui/Skeletons";
 
 export default function WishlistPage() {
-    const { data: items = [], isLoading, isError } = useWishlist();
-    const { mutate: remove } = useRemoveFromWishlist();
-    const [errorMsg, setErrorMsg] = useState("");
-
-    const handleRemove = (id: string) => {
-        remove(id, {
-            onError: () => setErrorMsg("Falha ao remover item."),
-        });
-    };
+    const { data: wishlist = [], isLoading, isError } = useWishlist();
+    const { mutate: removeFromWishlist, isPending: removing } = useRemoveFromWishlist();
+    const { mutate: addToCart, isPending: addingToCart } = useAddToCart();
 
     if (isLoading) {
         return (
-            <div className="max-w-7xl mx-auto px-4 py-16">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="animate-pulse border rounded-lg p-4">
-                            <div className="h-48 bg-gray-200 rounded mb-4" />
-                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                            <div className="h-4 bg-gray-200 rounded w-1/2" />
-                        </div>
-                    ))}
-                </div>
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <h1 className="text-3xl font-bold font-serif text-allure-black mb-8">Meus Favoritos</h1>
+                <ProductGridSkeleton count={4} />
             </div>
         );
     }
 
     if (isError) {
-        return <div className="p-10 text-center text-red-500">Erro ao carregar lista de desejos.</div>;
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+                <h1 className="text-3xl font-bold font-serif text-allure-black mb-4">Meus Favoritos</h1>
+                <p className="text-red-500">Erro ao carregar favoritos. Por favor, tente novamente.</p>
+            </div>
+        );
+    }
+
+    if (wishlist.length === 0) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+                <Heart className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h1 className="text-3xl font-bold font-serif text-allure-black mb-4">Sua lista está vazia</h1>
+                <p className="text-gray-600 mb-8">
+                    Adicione produtos aos favoritos para encontrá-los facilmente depois.
+                </p>
+                <Link
+                    href="/products"
+                    className="inline-block px-8 py-3 bg-allure-black text-white font-medium hover:bg-gray-800"
+                >
+                    Explorar Produtos
+                </Link>
+            </div>
+        );
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {errorMsg && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{errorMsg}</div>}
+        <div className="max-w-7xl mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold font-serif text-allure-black mb-8">
+                Meus Favoritos ({wishlist.length})
+            </h1>
 
-            <div className="flex items-center gap-3 mb-6">
-                <Heart className="h-6 w-6 text-allure-gold" />
-                <h1 className="text-2xl font-semibold font-serif">Lista de Desejos</h1>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {wishlist.map((item) => {
+                    const product = item.product;
+                    if (!product) return null;
 
-            {items.length === 0 ? (
-                <div className="text-center py-12">
-                    <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">Sua lista de desejos está vazia.</p>
-                    <Link
-                        href="/products"
-                        className="inline-block bg-allure-black text-white px-6 py-3 hover:bg-gray-800"
-                    >
-                        Explorar produtos
-                    </Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {items.map((it) => (
-                        <div key={it.id} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                            {it.product?.images?.[0]?.url && (
-                                <Link href={`/products/${it.product.slug}`}>
-                                    <img
-                                        src={it.product.images[0].url}
-                                        alt={it.product.name}
-                                        className="w-full h-48 object-cover"
-                                    />
-                                </Link>
-                            )}
+                    const mainImage = product.images?.[0];
+                    const hasVariants = product.variants?.length > 0;
+                    const firstVariant = product.variants?.[0];
+
+                    return (
+                        <div key={item.id} className="group relative bg-white rounded-lg overflow-hidden shadow-sm">
+                            {/* Image */}
+                            <Link href={`/products/${product.slug}`} className="block">
+                                <div className="relative aspect-[3/4] overflow-hidden">
+                                    {mainImage ? (
+                                        <img
+                                            src={getImageUrl(mainImage, "medium")}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                            <span className="text-gray-400">Sem imagem</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </Link>
+
+                            {/* Remove button */}
+                            <button
+                                onClick={() => removeFromWishlist(item.id)}
+                                disabled={removing}
+                                className="absolute top-2 right-2 p-2 bg-white/90 rounded-full shadow hover:bg-red-50 transition-colors"
+                                title="Remover dos favoritos"
+                            >
+                                <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-500" />
+                            </button>
+
+                            {/* Info */}
                             <div className="p-4">
-                                <div className="text-sm text-gray-500 mb-1">{it.product?.brand?.name}</div>
-                                <Link
-                                    href={`/products/${it.product?.slug}`}
-                                    className="font-medium text-allure-black hover:text-allure-gold"
-                                >
-                                    {it.product?.name || "Produto"}
+                                <Link href={`/products/${product.slug}`}>
+                                    <h3 className="font-medium text-gray-900 hover:text-allure-gold transition-colors line-clamp-2">
+                                        {product.name}
+                                    </h3>
                                 </Link>
-                                <div className="text-lg font-semibold mt-2">
-                                    R$ {it.product?.basePrice?.toFixed(2).replace(".", ",")}
-                                </div>
-                                <div className="flex gap-3 mt-4">
-                                    <Link
-                                        href={`/products/${it.product?.slug}`}
-                                        className="flex-1 text-center py-2 bg-allure-black text-white hover:bg-gray-800"
-                                    >
-                                        Ver produto
-                                    </Link>
+                                <p className="mt-1 text-lg font-semibold text-allure-black">
+                                    R$ {product.basePrice.toFixed(2).replace(".", ",")}
+                                </p>
+
+                                {/* Add to Cart */}
+                                {hasVariants && firstVariant && (
                                     <button
-                                        onClick={() => handleRemove(it.id)}
-                                        className="p-2 border border-red-500 text-red-500 hover:bg-red-50"
+                                        onClick={() => addToCart({ productVariantId: firstVariant.id, quantity: 1 })}
+                                        disabled={addingToCart}
+                                        className="mt-3 w-full flex items-center justify-center gap-2 py-2 bg-allure-black text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
                                     >
-                                        <Trash2 className="h-5 w-5" />
+                                        {addingToCart ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <ShoppingBag className="h-4 w-4" />
+                                        )}
+                                        Adicionar ao Carrinho
                                     </button>
-                                </div>
+                                )}
                             </div>
                         </div>
-                    ))}
-                </div>
-            )}
+                    );
+                })}
+            </div>
         </div>
     );
 }
-
-

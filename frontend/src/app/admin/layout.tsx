@@ -12,7 +12,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: "Produtos", href: "/admin/products", icon: Boxes },
         { name: "Categorias", href: "/admin/categories", icon: FolderOpen },
         { name: "Marcas", href: "/admin/brands", icon: Tag },
-        { name: "Atributos", href: "/admin/attributes", icon: Palette },
         { name: "Cupons", href: "/admin/coupons", icon: TicketPercent },
         { name: "Clientes", href: "/admin/customers", icon: Users },
         { name: "Voltar à Loja", href: "/", icon: Store },

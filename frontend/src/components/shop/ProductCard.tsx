@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ProductImage, ProductImageData } from "./ProductImage";
 
 interface ProductCardProps {
     id: string;
@@ -7,27 +7,30 @@ interface ProductCardProps {
     slug: string;
     price: number;
     promotionalPrice?: number;
+    image?: ProductImageData | null;
+    // Legacy support
     imageUrl?: string;
 }
 
-export function ProductCard({ id, name, slug, price, promotionalPrice, imageUrl }: ProductCardProps) {
+export function ProductCard({ id, name, slug, price, promotionalPrice, image, imageUrl }: ProductCardProps) {
     const displayPrice = promotionalPrice || price;
     const hasPromo = promotionalPrice && promotionalPrice < price;
+
+    // Support both new image object and legacy imageUrl
+    const imageData: ProductImageData | null = image || (imageUrl ? { url: imageUrl } : null);
 
     return (
         <Link href={`/products/${slug}`} className="group text-left block">
             <div className="overflow-hidden bg-gray-100 relative">
-                {imageUrl ? (
-                    <img
-                        src={imageUrl}
+                <div className="transition-transform duration-500 group-hover:scale-105">
+                    <ProductImage
+                        image={imageData}
                         alt={name}
-                        className="w-full h-auto aspect-[3/4] object-cover transition-transform duration-500 group-hover:scale-105"
+                        size="medium"
+                        aspectRatio="portrait"
+                        className="w-full h-auto"
                     />
-                ) : (
-                    <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400">Sem imagem</span>
-                    </div>
-                )}
+                </div>
                 {hasPromo && (
                     <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-semibold">
                         PROMO

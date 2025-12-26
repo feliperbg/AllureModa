@@ -36,7 +36,15 @@ export interface Product {
     brandId: string;
     category?: Category;
     brand?: Brand;
-    images: { url: string; isMain: boolean; id?: string; altText?: string }[];
+    images: {
+        url: string;           // Primary URL (medium)
+        thumbnailUrl?: string; // 200px for listings/cart
+        mediumUrl?: string;    // 600px for cards
+        largeUrl?: string;     // 1200px for detail/zoom
+        isMain: boolean;
+        id?: string;
+        altText?: string;
+    }[];
     variants: {
         id: string;
         sku: string;

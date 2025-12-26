@@ -43,8 +43,8 @@ export function FeaturedProducts({ type }: FeaturedProductsProps) {
                             name={product.name}
                             slug={product.slug}
                             price={product.basePrice}
-                            // promotionalPrice={product.promotionalPrice} // TODO: Add to Product interface if needed
-                            imageUrl={product.images?.[0]?.url}
+                            promotionalPrice={product.promotionalPrice}
+                            image={product.images?.[0]}
                         />
                     ))}
                 </div>

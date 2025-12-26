@@ -4,10 +4,24 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using Serilog;
+using Microsoft.Extensions.Caching.Distributed;
+using FluentValidation.AspNetCore;
+using AllureModa.API.Services;
+using AllureModa.API.Services.Email;
+using FluentValidation;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
+builder.WebHost.UseSentry(o =>
+{
+    o.Dsn = builder.Configuration["Sentry:Dsn"];
+    o.TracesSampleRate = 1.0;
+});
 
 // 1. Database Context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -20,9 +34,37 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             errorCodesToAdd: null);
     }));
 
+// Redis Cache
+var redisConnection = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnection))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnection;
+        options.InstanceName = "AllureModa_";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+
 // 2. Services
-builder.Services.AddScoped<AllureModa.API.Services.AuthService>();
-builder.Services.AddScoped<AllureModa.API.Services.AsaasService>();
+builder.Services.AddHttpClient<IAsaasService, AsaasService>(); // Typed Client with Interface
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddHttpClient<AllureModa.API.Services.IShippingService, AllureModa.API.Services.MelhorEnvioService>();
+
+// Hangfire
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(connectionString)));
+
+builder.Services.AddHangfireServer();
 
 // 3. Controllers & JSON Options
 builder.Services.AddControllers()
@@ -31,6 +73,9 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // Prevent loop errors
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); // Strings for Enums
     });
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // 4. Authentication (JWT with HttpOnly Cookie support)
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -121,6 +166,13 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Serilog
+builder.Host.UseSerilog((context, configuration) =>
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console());
+
 // 8. Health Checks
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString!, name: "postgresql", tags: new[] { "db", "sql", "postgresql" });
@@ -134,6 +186,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHangfireDashboard("/hangfire"); // Dashboard at /hangfire
+
+app.UseSerilogRequestLogging(); // Log HTTP requests
+
 // Seed Database
 using (var scope = app.Services.CreateScope())
 {
@@ -141,8 +197,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        // Ensure database is migrated
-        context.Database.Migrate();
+        // Ensure database is migrated (only for relational)
+        if (context.Database.IsRelational())
+        {
+            context.Database.Migrate();
+        }
         DbInitializer.Initialize(context);
     }
     catch (Exception ex)
@@ -151,7 +210,6 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while seeding the database.");
     }
 }
-
 
 // Security Headers Middleware
 app.Use(async (context, next) =>
@@ -170,42 +228,24 @@ app.Use(async (context, next) =>
     await next();
 });
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
 app.UseCors("AllowFrontend");
 
 app.UseRateLimiter();
 
 app.UseAuthentication();
-
-// Debug Middleware for Claims (Re-added for diagnosis)
-app.Use(async (context, next) =>
-{
-    if (context.User.Identity?.IsAuthenticated == true)
-    {
-        Console.WriteLine($"[AuthDebug] User: {context.User.Identity.Name}");
-        Console.WriteLine($"[AuthDebug] IsInRole(ADMIN): {context.User.IsInRole("ADMIN")}");
-        foreach (var claim in context.User.Claims)
-        {
-            Console.WriteLine($"[AuthDebug] Claim: {claim.Type} = {claim.Value}");
-        }
-    }
-    else
-    {
-        Console.WriteLine("[AuthDebug] User NOT Authenticated");
-    }
-    await next();
-});
-
 app.UseAuthorization();
+
+
 
 // Health check endpoint
 app.MapHealthChecks("/health");
 
 app.MapControllers();
 
+// Schedule Recurring Job
+RecurringJob.AddOrUpdate<AllureModa.API.Jobs.OrderCleanupJob>("order-cleanup", job => job.ExecuteAsync(), Cron.Hourly);
+
 app.Run();
+
+public partial class Program { }
 

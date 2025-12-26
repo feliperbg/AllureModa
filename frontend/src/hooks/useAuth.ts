@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface UserProfile {
     id: string;
@@ -36,9 +37,13 @@ export function useLogin() {
             return data;
         },
         onSuccess: (data) => {
-            // Invalidate user query to fetch fresh data
             queryClient.setQueryData(["auth", "user"], data.user);
+            toast.success(`Bem-vinda, ${data.user.firstName}!`);
             router.push(data.user.role === "ADMIN" ? "/admin" : "/");
+        },
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || "Email ou senha incorretos";
+            toast.error(message);
         },
     });
 }
@@ -51,6 +56,13 @@ export function useRegister() {
         mutationFn: async (data: any) => {
             const { data: response } = await api.post("/auth/register", data);
             return response;
+        },
+        onSuccess: () => {
+            toast.success("Conta criada com sucesso! Faça login para continuar.");
+        },
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || "Erro ao criar conta";
+            toast.error(message);
         },
     });
 }
@@ -65,6 +77,13 @@ export function useLogout() {
             await api.post("/auth/logout");
         },
         onSuccess: () => {
+            queryClient.setQueryData(["auth", "user"], null);
+            queryClient.invalidateQueries({ queryKey: ["cart"] });
+            toast.info("Você saiu da sua conta");
+            router.push("/login");
+        },
+        onError: () => {
+            // Even if logout fails, clear local state
             queryClient.setQueryData(["auth", "user"], null);
             router.push("/login");
         },

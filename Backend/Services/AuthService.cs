@@ -138,5 +138,37 @@ namespace AllureModa.API.Services
             return tokenHandler.WriteToken(token);
         }
 
+        public async Task<User> GenerateResetTokenAsync(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                return null;
+            }
+
+            user.PasswordResetToken = Guid.NewGuid().ToString("N");
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+            await _context.SaveChangesAsync();
+            return user;
+        }
+
+        public async Task ResetPasswordAsync(string email, string token, string newPassword)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) throw new Exception("Invalid request");
+
+            if (user.PasswordResetToken != token || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            {
+                throw new Exception("Invalid or expired token");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

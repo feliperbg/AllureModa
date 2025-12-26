@@ -38,12 +38,24 @@ namespace AllureModa.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Neighborhood")
+                        .HasColumnType("text");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
                     b.Property<string>("PostalCode")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecipientName")
                         .HasColumnType("text");
 
                     b.Property<string>("State")
@@ -258,6 +270,26 @@ namespace AllureModa.API.Migrations
                     b.ToTable("Coupons");
                 });
 
+            modelBuilder.Entity("AllureModa.API.Models.NewsletterSubscriber", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("NewsletterSubscribers");
+                });
+
             modelBuilder.Entity("AllureModa.API.Models.Order", b =>
                 {
                     b.Property<string>("Id")
@@ -275,6 +307,13 @@ namespace AllureModa.API.Migrations
 
                     b.Property<decimal>("DiscountAmount")
                         .HasColumnType("decimal(10, 2)");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ShippingAddressId")
                         .IsRequired()
@@ -612,6 +651,12 @@ namespace AllureModa.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
@@ -804,7 +849,7 @@ namespace AllureModa.API.Migrations
             modelBuilder.Entity("AllureModa.API.Models.Payment", b =>
                 {
                     b.HasOne("AllureModa.API.Models.Order", "Order")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -951,6 +996,8 @@ namespace AllureModa.API.Migrations
             modelBuilder.Entity("AllureModa.API.Models.Order", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("AllureModa.API.Models.Product", b =>

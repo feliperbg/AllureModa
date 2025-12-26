@@ -22,6 +22,21 @@ services:
     networks:
       - alluremoda-network
 
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: alluremoda-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - alluremoda-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Backend API (.NET 8)
   backend:
     build:
@@ -31,13 +46,15 @@ services:
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING:-Host=3.148.140.216;Port=5432;Database=postgres;Username=postgres.qjmnopkwphwsgdlhmjqs;Password=G0ncalves@232}
-      - JwtSettings__Secret=${JWT_SECRET:-x9S4q0v+V0IjvHkG20uAxaHx1ijj+q1HWjHKv+ohxp/oK+77qyXkVj/l4QYHHTF3}
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING:-Host=3.148.140.216;Port=5432;Database=postgres;Username=postgres.qjmnopkwphwsgdlhmjqs;Password=rbpsLutdZUZfN0qt}
+      - JwtSettings__Secret=${JWT_SECRET:-GurcAAeWJP747SUo4chLytyxfVdgzvfgqAbAOLMYroYpF7VsQ1kWGTAzXefV5sKQ}
       - JwtSettings__Issuer=${JWT_ISSUER:-AllureModaAPI}
       - JwtSettings__Audience=${JWT_AUDIENCE:-AllureModaClient}
       - Asaas__ApiKey=${ASAAS_API_KEY:-YOUR_ASAAS_SANDBOX_API_KEY}
       - Asaas__BaseUrl=${ASAAS_BASE_URL:-https://sandbox.asaas.com/api/v3/}
+      - Asaas__BaseUrl=${ASAAS_BASE_URL:-https://sandbox.asaas.com/api/v3/}
       - Asaas__WebhookToken=${ASAAS_WEBHOOK_TOKEN:-}
+      - ConnectionStrings__Redis=${REDIS_CONNECTION:-redis:6379}
     ports:
       - "5000:5000"
     depends_on:

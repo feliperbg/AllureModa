@@ -9,11 +9,16 @@ namespace AllureModa.API.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
+        public string? RecipientName { get; set; }
+        public string? Phone { get; set; }
+
         [Required]
         public required string Street { get; set; }
 
         [Required]
         public required string Number { get; set; }
+
+        public string? Neighborhood { get; set; }
 
         [Required]
         public required string City { get; set; }
@@ -30,6 +35,7 @@ namespace AllureModa.API.Models
         public string? AddressLine2 { get; set; }
 
         public AddressType Type { get; set; } = AddressType.SHIPPING;
+        public bool IsDefault { get; set; } = false;
 
         [Required]
         public required string UserId { get; set; }

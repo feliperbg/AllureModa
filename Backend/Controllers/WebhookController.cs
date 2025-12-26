@@ -1,6 +1,7 @@
 using AllureModa.API.Data;
 using AllureModa.API.Models;
 using AllureModa.API.Services;
+using AllureModa.API.Services.Email;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -14,15 +15,18 @@ namespace AllureModa.API.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<WebhookController> _logger;
+        private readonly IEmailService _emailService;
 
         public WebhookController(
             ApplicationDbContext context, 
             IConfiguration configuration,
-            ILogger<WebhookController> logger)
+            ILogger<WebhookController> logger,
+            IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
             _logger = logger;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -137,6 +141,53 @@ namespace AllureModa.API.Controllers
                     if (payment.Order != null)
                     {
                         payment.Order.Status = OrderStatus.PAID;
+                        payment.Order.PaymentStatus = newStatus;
+                        payment.Order.UpdatedAt = DateTime.UtcNow;
+                        
+                        // Send Email
+                        try
+                        {
+                             // Need to load user if not included
+                             var orderUser = await _context.Users.FindAsync(payment.Order.UserId);
+                             if (orderUser != null)
+                             {
+                                await _emailService.SendOrderPaidAsync(payment.Order, orderUser);
+                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send payment confirmation email");
+                        }
+                    }
+                }
+
+                // STOCK RESTORATION: Restore stock when order is refunded or chargeback
+                if (newStatus == PaymentStatus.REFUNDED || 
+                    newStatus == PaymentStatus.CHARGEBACK_REQUESTED ||
+                    newStatus == PaymentStatus.CHARGEBACK_DISPUTE)
+                {
+                    if (payment.Order != null)
+                    {
+                        // Load order items with product variants
+                        await _context.Entry(payment.Order)
+                            .Collection(o => o.Items)
+                            .Query()
+                            .Include(i => i.ProductVariant)
+                            .LoadAsync();
+
+                        foreach (var item in payment.Order.Items)
+                        {
+                            if (item.ProductVariant != null)
+                            {
+                                item.ProductVariant.Stock += item.Quantity;
+                                _logger.LogInformation(
+                                    "Restored {Quantity} units to variant {VariantId} due to {Status}",
+                                    item.Quantity, item.ProductVariant.Id, newStatus);
+                            }
+                        }
+
+                        payment.Order.Status = OrderStatus.CANCELLED;
+                        payment.Order.PaymentStatus = newStatus;
                         payment.Order.UpdatedAt = DateTime.UtcNow;
                     }
                 }

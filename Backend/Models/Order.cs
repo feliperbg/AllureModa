@@ -9,7 +9,15 @@ namespace AllureModa.API.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
+        public string OrderNumber { get; set; } = GenerateOrderNumber();
+
         public OrderStatus Status { get; set; } = OrderStatus.PENDING;
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.PENDING;
+
+        private static string GenerateOrderNumber()
+        {
+            return $"AM-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
+        }
 
         [Column(TypeName = "decimal(10, 2)")]
         public decimal SubTotal { get; set; }
@@ -46,5 +54,6 @@ namespace AllureModa.API.Models
         public Address? BillingAddress { get; set; }
 
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 }

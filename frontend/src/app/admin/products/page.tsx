@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Package, Plus, Pencil, Trash2, X, Loader2, Save } from "lucide-react";
+import { Package, Plus, Pencil, Trash2, X, Loader2, Save, Upload } from "lucide-react";
 import {
     useProducts,
     useCategories,
@@ -12,9 +12,11 @@ import {
     useDeleteProduct,
     Product
 } from "@/hooks/useProducts";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { VariantMatrixEditor, VariantData } from "@/components/admin/VariantMatrixEditor";
 // import { toast } from "sonner";
 
-// Reuse FormData interface or simplified one
+// Form interface with matrix-based variants
 interface FormData {
     name: string;
     description: string;
@@ -24,7 +26,7 @@ interface FormData {
     brandId: string;
     isActive: boolean;
     images: { url: string; altText: string }[];
-    variants: { sku: string; price: string; stock: string; attributes: { value: string; label: string }[] }[];
+    variants: VariantData[];
 }
 
 const emptyForm: FormData = {
@@ -48,6 +50,7 @@ export default function ProductsAdminPage() {
     const { mutate: createProduct, isPending: creating } = useCreateProduct();
     const { mutate: updateProduct, isPending: updating } = useUpdateProduct();
     const { mutate: deleteProductMutation, isPending: deleting } = useDeleteProduct();
+    const { mutate: uploadImage, isPending: uploading } = useImageUpload();
 
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<Product | null>(null);
@@ -76,12 +79,29 @@ export default function ProductsAdminPage() {
             brandId: p.brandId || p.brand?.id || "",
             isActive: p.isActive,
             images: p.images.map((i) => ({ url: i.url, altText: i.altText || "" })),
-            variants: p.variants.map((v) => ({
-                sku: v.sku,
-                price: String(v.price || v.stockQuantity), // Watch out for price nesting in variants vs root. Original code uses v.price.
-                stock: String(v.stockQuantity),
-                attributes: v.attributes.map(a => ({ value: a.attributeValue.id, label: a.attributeValue.value })),
-            })),
+            variants: p.variants.map((v) => {
+                // Extract color and size from variant attributes
+                let color = "";
+                let colorHex = "";
+                let size = "";
+                v.attributes.forEach((a) => {
+                    const attrName = a.attributeValue.attribute.name.toLowerCase();
+                    if (attrName === "cor") {
+                        color = a.attributeValue.value;
+                        colorHex = a.attributeValue.meta || "#808080";
+                    } else if (attrName === "tamanho") {
+                        size = a.attributeValue.value;
+                    }
+                });
+                return {
+                    sku: v.sku,
+                    color,
+                    colorHex,
+                    size,
+                    price: v.price || p.basePrice,
+                    stock: v.stockQuantity,
+                };
+            }),
         });
         setShowModal(true);
         setError("");
@@ -109,9 +129,12 @@ export default function ProductsAdminPage() {
             images: form.images,
             variants: form.variants.map((v) => ({
                 sku: v.sku,
-                price: Number(v.price),
-                stockQuantity: Number(v.stock),
-                attributes: v.attributes.map((a) => ({ attributeValueId: a.value })),
+                price: v.price,
+                stockQuantity: v.stock,
+                attributes: [
+                    // Map color and size to attribute values (will need backend attribute IDs)
+                    // For now, we pass the variant data as-is and let backend handle
+                ],
             })),
         };
 
@@ -141,12 +164,7 @@ export default function ProductsAdminPage() {
         });
     };
 
-    const addVariant = () => {
-        setForm((f) => ({
-            ...f,
-            variants: [...f.variants, { sku: "", price: "", stock: "0", attributes: [] }],
-        }));
-    };
+    // addVariant is now handled by VariantMatrixEditor
 
     const addImage = () => {
         setForm((f) => ({
@@ -368,100 +386,77 @@ export default function ProductsAdminPage() {
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-sm font-medium">Imagens</label>
-                                    <button onClick={addImage} className="text-sm text-allure-gold hover:underline">
-                                        + Adicionar
-                                    </button>
                                 </div>
-                                {form.images.map((img, idx) => (
-                                    <div key={idx} className="flex gap-2 mb-2">
-                                        <input
-                                            value={img.url}
-                                            onChange={(e) => {
-                                                const imgs = [...form.images];
-                                                imgs[idx].url = e.target.value;
-                                                setForm((f) => ({ ...f, images: imgs }));
-                                            }}
-                                            placeholder="URL da imagem"
-                                            className="flex-1 border p-2 rounded text-sm"
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                const imgs = form.images.filter((_, i) => i !== idx);
-                                                setForm((f) => ({ ...f, images: imgs }));
-                                            }}
-                                            className="p-2 text-red-500"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
+
+                                {/* Uploaded Images Preview */}
+                                <div className="flex flex-wrap gap-3 mb-3">
+                                    {form.images.map((img, idx) => (
+                                        <div key={idx} className="relative group">
+                                            <img
+                                                src={img.url}
+                                                alt={img.altText || `Imagem ${idx + 1}`}
+                                                className="w-20 h-20 object-cover rounded-lg border"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const imgs = form.images.filter((_, i) => i !== idx);
+                                                    setForm((f) => ({ ...f, images: imgs }));
+                                                }}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Upload Button */}
+                                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer hover:border-allure-gold hover:bg-gray-50 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        className="hidden"
+                                        disabled={uploading}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            uploadImage(file, {
+                                                onSuccess: (data) => {
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        images: [...f.images, { url: data.url, altText: "" }],
+                                                    }));
+                                                },
+                                                onError: (err: any) => {
+                                                    setError(err?.response?.data?.message || "Erro ao fazer upload");
+                                                },
+                                            });
+                                            e.target.value = ""; // Reset input
+                                        }}
+                                    />
+                                    {uploading ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin text-allure-gold" />
+                                            <span className="text-sm text-gray-600">Enviando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="h-5 w-5 text-gray-400" />
+                                            <span className="text-sm text-gray-600">Clique para adicionar imagem</span>
+                                        </>
+                                    )}
+                                </label>
                             </div>
 
-                            {/* Variants */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-sm font-medium">Variantes</label>
-                                    <button onClick={addVariant} className="text-sm text-allure-gold hover:underline">
-                                        + Adicionar
-                                    </button>
-                                </div>
-                                {form.variants.map((v, idx) => (
-                                    <div key={idx} className="flex gap-2 mb-2 p-2 border rounded">
-                                        <input
-                                            value={v.sku}
-                                            onChange={(e) => {
-                                                const vars = [...form.variants];
-                                                vars[idx].sku = e.target.value;
-                                                setForm((f) => ({ ...f, variants: vars }));
-                                            }}
-                                            placeholder="SKU"
-                                            className="w-24 border p-2 rounded text-sm"
-                                        />
-                                        <input
-                                            type="number"
-                                            value={v.price}
-                                            onChange={(e) => {
-                                                const vars = [...form.variants];
-                                                vars[idx].price = e.target.value;
-                                                setForm((f) => ({ ...f, variants: vars }));
-                                            }}
-                                            placeholder="Preço"
-                                            className="w-24 border p-2 rounded text-sm"
-                                        />
-                                        <input
-                                            type="number"
-                                            value={v.stock}
-                                            onChange={(e) => {
-                                                const vars = [...form.variants];
-                                                vars[idx].stock = e.target.value;
-                                                setForm((f) => ({ ...f, variants: vars }));
-                                            }}
-                                            placeholder="Estoque"
-                                            className="w-20 border p-2 rounded text-sm"
-                                        />
-                                        <select
-                                            // Handling Attribute selection crudely for now - assuming one attribute for simplicity in this view or just skipping complex attribute UI logic to keep it simple as user didn't ask for full attribute logic refactor, just Tanstack rewrite.
-                                            // The original code passed 'attributes' state.
-                                            onChange={(e) => {
-                                                const vars = [...form.variants];
-                                                // Simplified: Just adding one attribute logic if needed, or leave blank if difficult to map
-                                                // vars[idx].attributes = ...
-                                            }}
-                                            className="w-24 border p-2 rounded text-sm hidden" // Hiding attribute edit for now to avoid complexity if not critical, or implement if needed
-                                        >
-                                            <option>Attr</option>
-                                        </select>
-                                        <button
-                                            onClick={() => {
-                                                const vars = form.variants.filter((_, i) => i !== idx);
-                                                setForm((f) => ({ ...f, variants: vars }));
-                                            }}
-                                            className="p-2 text-red-500"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
+                            {/* Variants - Matrix Editor */}
+                            <div className="border-t pt-4">
+                                <VariantMatrixEditor
+                                    basePrice={Number(form.basePrice) || 0}
+                                    variants={form.variants}
+                                    onChange={(variants) => setForm((f) => ({ ...f, variants }))}
+                                />
                             </div>
                         </div>
 

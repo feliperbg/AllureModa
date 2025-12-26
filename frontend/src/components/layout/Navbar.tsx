@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Search, User, ShoppingBag, Heart, LayoutDashboard, Menu, LogOut, X } from "lucide-react";
+import { User, ShoppingBag, Heart, LayoutDashboard, Menu, LogOut, X } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { useUser, useLogout } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
+import { SearchBar } from "./SearchBar";
 
 export function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const cartCount = 0; // Placeholder for cart count
 
     const { data: user } = useUser();
     const { mutate: logout } = useLogout();
     const { data: categories = [] } = useCategories();
+    const { data: cartItems = [] } = useCart();
+    const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const handleLogout = () => {
         logout();
@@ -42,9 +45,9 @@ export function Navbar() {
                     </Link>
 
                     <div className="flex items-center justify-self-end gap-3 sm:gap-4 text-gray-900">
-                        <Link href="/search" aria-label="Buscar" title="Buscar" className="hover:opacity-70">
-                            <Search size={20} />
-                        </Link>
+                        <div className="hidden md:block">
+                            <SearchBar />
+                        </div>
                         <Link href="/wishlist" aria-label="Favoritos" title="Favoritos" className="hover:opacity-70">
                             <Heart size={20} />
                         </Link>

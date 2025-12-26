@@ -1,8 +1,7 @@
-using AllureModa.API.Data;
 using AllureModa.API.Models;
+using AllureModa.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace AllureModa.API.Controllers
@@ -12,11 +11,11 @@ namespace AllureModa.API.Controllers
     [Authorize]
     public class CartController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICartService _cartService;
 
-        public CartController(ApplicationDbContext context)
+        public CartController(ICartService cartService)
         {
-            _context = context;
+            _cartService = cartService;
         }
 
         private string GetUserId()
@@ -28,74 +27,22 @@ namespace AllureModa.API.Controllers
         [HttpGet]
         public async Task<ActionResult<Cart>> GetCart()
         {
-            var userId = GetUserId();
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                    .ThenInclude(ci => ci.ProductVariant)
-                        .ThenInclude(pv => pv.Product)
-                .Include(c => c.Items)
-                    .ThenInclude(ci => ci.ProductVariant)
-                        .ThenInclude(pv => pv.Images)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null)
-            {
-                cart = new Cart { UserId = userId };
-                _context.Carts.Add(cart);
-                await _context.SaveChangesAsync();
-            }
-
-            return cart;
+            var cart = await _cartService.GetCartAsync(GetUserId());
+            return Ok(cart);
         }
 
         [HttpPost("items")]
         public async Task<ActionResult<Cart>> AddItem(CartItem item)
         {
-            var userId = GetUserId();
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null)
-            {
-                cart = new Cart { UserId = userId };
-                _context.Carts.Add(cart);
-                await _context.SaveChangesAsync();
-            }
-
-            var existingItem = cart.Items.FirstOrDefault(i => i.ProductVariantId == item.ProductVariantId);
-            if (existingItem != null)
-            {
-                existingItem.Quantity += item.Quantity;
-            }
-            else
-            {
-                item.CartId = cart.Id; // Ensure mapping
-                cart.Items.Add(item);
-            }
-
-            await _context.SaveChangesAsync();
-            return await GetCart(); // Return full cart
+            var cart = await _cartService.AddItemAsync(GetUserId(), item);
+            return Ok(cart);
         }
 
         [HttpDelete("items/{variantId}")]
         public async Task<ActionResult<Cart>> RemoveItem(string variantId)
         {
-            var userId = GetUserId();
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null) return NotFound();
-
-            var item = cart.Items.FirstOrDefault(i => i.ProductVariantId == variantId);
-            if (item != null)
-            {
-                cart.Items.Remove(item);
-                await _context.SaveChangesAsync();
-            }
-
-            return await GetCart();
+            var cart = await _cartService.RemoveItemAsync(GetUserId(), variantId);
+            return Ok(cart);
         }
     }
 }

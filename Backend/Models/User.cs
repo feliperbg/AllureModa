@@ -17,6 +17,10 @@ namespace AllureModa.API.Models
         [JsonIgnore]
         public string PasswordHash { get; set; } = null!;
 
+        [JsonIgnore]
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
         [Required]
         public required string FirstName { get; set; }
 
@@ -29,7 +33,7 @@ namespace AllureModa.API.Models
 
         public Role Role { get; set; } = Role.USER;
 
-        // Asaas Integration
+        // Payment integration
         public string? AsaasCustomerId { get; set; }
 
         // SaaS Multi-tenancy

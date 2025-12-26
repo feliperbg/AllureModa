@@ -36,31 +36,11 @@ namespace AllureModa.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Order>> CreateOrder(Order order)
+        [Obsolete("Use /api/checkout instead")]
+        public ActionResult<Order> CreateOrder(Order order)
         {
-            var userId = GetUserId();
-            order.UserId = userId; // Enforce user ownership
-            order.Status = OrderStatus.PENDING;
-            order.CreatedAt = DateTime.UtcNow;
-            
-            // In a real scenario, we would calculate TotalPrice from items DB prices, not trust frontend.
-            // For migration, we accept standard logic but validation is recommended.
-            
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            // Clear Cart (Optional, assuming Checkout clears cart)
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-            
-            if (cart != null)
-            {
-                 _context.CartItems.RemoveRange(cart.Items);
-                 await _context.SaveChangesAsync();
-            }
-
-            return CreatedAtAction(nameof(GetMyOrders), new { id = order.Id }, order);
+            // Deprecated to ensure data integrity (Stock management, proper payment flows).
+            return StatusCode(410, new { message = "This endpoint is deprecated. Please use /api/checkout." });
         }
 
         [HttpGet("{id}")]
@@ -71,6 +51,7 @@ namespace AllureModa.API.Controllers
                     .ThenInclude(oi => oi.ProductVariant)
                         .ThenInclude(pv => pv.Product)
                  .Include(o => o.ShippingAddress)
+                 .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null) return NotFound();

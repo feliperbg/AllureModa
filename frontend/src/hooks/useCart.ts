@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export interface CartItem {
     id: string;
@@ -27,7 +28,6 @@ export function useCart() {
         queryKey: ["cart"],
         queryFn: async () => {
             const { data } = await api.get<{ items: any[] }>("/cart");
-            // Normalize data structure if needed, or assume API matches
             const normalized = (data.items || []).map((ci: any) => ({
                 id: ci.id,
                 quantity: ci.quantity,
@@ -48,8 +48,11 @@ export function useAddToCart() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["cart"] });
-            // Optional: Dispatch event for non-react parts if any
-            // window.dispatchEvent(new CustomEvent("cart-updated"));
+            toast.success("Produto adicionado ao carrinho!");
+        },
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || "Erro ao adicionar ao carrinho";
+            toast.error(message);
         },
     });
 }
@@ -63,6 +66,10 @@ export function useUpdateCartItem() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["cart"] });
         },
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || "Erro ao atualizar carrinho";
+            toast.error(message);
+        },
     });
 }
 
@@ -70,11 +77,15 @@ export function useRemoveFromCart() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ productVariantId, quantity }: { productVariantId: string; quantity: number }) => {
-            // Sending negative quantity effectively removes/decreases
             await api.put("/cart", { productVariantId, quantity: -quantity });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["cart"] });
+            toast.info("Produto removido do carrinho");
+        },
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || "Erro ao remover do carrinho";
+            toast.error(message);
         },
     });
 }
