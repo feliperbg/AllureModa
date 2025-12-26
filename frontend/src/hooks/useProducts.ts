@@ -46,6 +46,7 @@ export interface Product {
             attributeValue: {
                 id: string;
                 value: string;
+                meta?: string;
                 attribute: { name: string };
             };
         }[];

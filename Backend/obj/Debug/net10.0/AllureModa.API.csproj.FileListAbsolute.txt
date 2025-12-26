@@ -1,9 +1,0 @@
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.csproj.AssemblyReference.cache
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\rpswa.dswa.cache.json
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.AssemblyInfoInputs.cache
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.AssemblyInfo.cs
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.csproj.CoreCompileInputs.cache
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\Felipe Goncalves\Documents\Projetos\AllureModa\AllureModa.API\obj\Debug\net10.0\AllureModa.API.sourcelink.json

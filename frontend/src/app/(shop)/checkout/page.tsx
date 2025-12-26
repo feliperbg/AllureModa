@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { useAddresses, useCreateAddress } from "@/hooks/useAddresses";
-import { useCreateOrder, useCreatePayment, useValidateCoupon } from "@/hooks/useCustomer";
+import { useCreateOrder, useCreatePayment } from "@/hooks/useCustomer";
 import { Loader2, CheckCircle, CreditCard, ScanLine, FileText, Plus, MapPin, Lock } from "lucide-react";
 import Link from "next/link";
 import { useCep } from "@/hooks/useAddresses";

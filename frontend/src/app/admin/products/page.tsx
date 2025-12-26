@@ -12,7 +12,7 @@ import {
     useDeleteProduct,
     Product
 } from "@/hooks/useProducts";
-import { toast } from "sonner"; // If sonner is available or use generic alert for now, or just local state. Local state is used in original.
+// import { toast } from "sonner";
 
 // Reuse FormData interface or simplified one
 interface FormData {

@@ -25,12 +25,11 @@ namespace AllureModa.API.Controllers
             var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
 
             // 1. Basic Counts (Parallel execution if possible, EF Core allows async mostly)
-            var usersCountTask = _context.Users.CountAsync();
-            var productsCountTask = _context.Products.CountAsync();
-            var ordersCountTask = _context.Orders.CountAsync();
-            var revenueTask = _context.Orders.SumAsync(o => o.TotalPrice);
-
-            await Task.WhenAll(usersCountTask, productsCountTask, ordersCountTask, revenueTask);
+            // 1. Basic Counts (Execute sequentially to avoid DbContext concurrency issues)
+            var usersCount = await _context.Users.CountAsync();
+            var productsCount = await _context.Products.CountAsync();
+            var ordersCount = await _context.Orders.CountAsync();
+            var revenue = await _context.Orders.SumAsync(o => o.TotalPrice);
 
             // 2. Charts Data (Group By Date) - Optimized in DB
             // Note: Grouping by Date in EF Core with PostgreSQL can be tricky with timezones.
@@ -96,10 +95,10 @@ namespace AllureModa.API.Controllers
 
             return Ok(new AdminStatsResponse
             {
-                Users = usersCountTask.Result,
-                Products = productsCountTask.Result,
-                Orders = ordersCountTask.Result,
-                Revenue = revenueTask.Result,
+                Users = usersCount,
+                Products = productsCount,
+                Orders = ordersCount,
+                Revenue = revenue,
                 TopProducts = topProducts,
                 Charts = charts
             });

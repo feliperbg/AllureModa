@@ -30,13 +30,13 @@ services:
     container_name: alluremoda-api
     restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-alluremoda};Username=${POSTGRES_USER:-alluremoda};Password=${POSTGRES_PASSWORD:-alluremoda123}
-      - Jwt__Key=${JWT_SECRET:-SuperSecretKeyForAllureModaJWTToken2024!}
-      - Jwt__Issuer=${JWT_ISSUER:-AllureModa.API}
-      - Jwt__Audience=${JWT_AUDIENCE:-AllureModa.Client}
-      - Asaas__ApiKey=${ASAAS_API_KEY:-}
-      - Asaas__BaseUrl=${ASAAS_BASE_URL:-https://sandbox.asaas.com/api/v3}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING:-Host=3.148.140.216;Port=5432;Database=postgres;Username=postgres.qjmnopkwphwsgdlhmjqs;Password=G0ncalves@232}
+      - JwtSettings__Secret=${JWT_SECRET:-x9S4q0v+V0IjvHkG20uAxaHx1ijj+q1HWjHKv+ohxp/oK+77qyXkVj/l4QYHHTF3}
+      - JwtSettings__Issuer=${JWT_ISSUER:-AllureModaAPI}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-AllureModaClient}
+      - Asaas__ApiKey=${ASAAS_API_KEY:-YOUR_ASAAS_SANDBOX_API_KEY}
+      - Asaas__BaseUrl=${ASAAS_BASE_URL:-https://sandbox.asaas.com/api/v3/}
       - Asaas__WebhookToken=${ASAAS_WEBHOOK_TOKEN:-}
     ports:
       - "5000:5000"
@@ -58,12 +58,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+        - NEXT_PUBLIC_API_URL=/api
     container_name: alluremoda-web
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:5000/api}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
     ports:
       - "3000:3000"
     depends_on:

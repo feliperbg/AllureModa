@@ -12,7 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Database Context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null);
+    }));
 
 // 2. Services
 builder.Services.AddScoped<AllureModa.API.Services.AuthService>();
@@ -71,7 +77,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins(frontendUrl)
+            policy.WithOrigins(frontendUrl, "http://127.0.0.1:3000")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -128,6 +134,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Seed Database
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        // Ensure database is migrated
+        context.Database.Migrate();
+        DbInitializer.Initialize(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
+
 // Security Headers Middleware
 app.Use(async (context, next) =>
 {
@@ -145,13 +170,36 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
 
 app.UseRateLimiter();
 
 app.UseAuthentication();
+
+// Debug Middleware for Claims (Re-added for diagnosis)
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        Console.WriteLine($"[AuthDebug] User: {context.User.Identity.Name}");
+        Console.WriteLine($"[AuthDebug] IsInRole(ADMIN): {context.User.IsInRole("ADMIN")}");
+        foreach (var claim in context.User.Claims)
+        {
+            Console.WriteLine($"[AuthDebug] Claim: {claim.Type} = {claim.Value}");
+        }
+    }
+    else
+    {
+        Console.WriteLine("[AuthDebug] User NOT Authenticated");
+    }
+    await next();
+});
+
 app.UseAuthorization();
 
 // Health check endpoint

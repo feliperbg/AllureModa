@@ -18,11 +18,13 @@ namespace AllureModa.API.Controllers
             _configuration = configuration;
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
         {
             try
             {
+                Console.WriteLine($"[API] Login request for: {request.Email} with password length: {request.Password?.Length ?? 0}");
                 var response = await _authService.LoginAsync(request);
                 
                 // Set JWT in HttpOnly cookie
@@ -75,7 +77,7 @@ namespace AllureModa.API.Controllers
         [Authorize]
         public async Task<ActionResult> GetCurrentUser()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst("sub")?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "Not authenticated" });
 
@@ -113,6 +115,8 @@ namespace AllureModa.API.Controllers
                 return Unauthorized(new { message = "Invalid token" });
             }
         }
+        
+
 
         private void SetTokenCookie(string token)
         {

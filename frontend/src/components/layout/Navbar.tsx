@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Search, User, ShoppingBag, Heart, LayoutDashboard, Menu, LogOut, X } from "lucide-react";
+import { useCategories } from "@/hooks/useCategories";
 import { useUser, useLogout } from "@/hooks/useAuth";
 
 export function Navbar() {
@@ -11,8 +12,7 @@ export function Navbar() {
 
     const { data: user } = useUser();
     const { mutate: logout } = useLogout();
-
-    const categories: any[] = []; // Placeholder for categories from API
+    const { data: categories = [] } = useCategories();
 
     const handleLogout = () => {
         logout();
@@ -82,7 +82,7 @@ export function Navbar() {
 
                 {/* Desktop Categories */}
                 <div className="hidden md:flex h-12 items-center justify-center gap-6">
-                    {categories.map((c: any) => (
+                    {categories.map((c) => (
                         <Link
                             key={c.id}
                             href={`/products?categorySlug=${encodeURIComponent(c.slug)}`}
@@ -97,7 +97,7 @@ export function Navbar() {
                 {menuOpen && (
                     <div className="md:hidden pb-3">
                         <div className="grid grid-cols-2 gap-2">
-                            {categories.map((c: any) => (
+                            {categories.map((c) => (
                                 <Link
                                     key={c.id}
                                     href={`/products?categorySlug=${encodeURIComponent(c.slug)}`}

@@ -24,9 +24,21 @@ namespace AllureModa.API.Services
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            if (user == null)
             {
-                throw new Exception("Invalid credentials");
+                 Console.WriteLine($"[Auth] User not found: {request.Email}");
+                 throw new Exception("Credenciais inválidas");
+            }
+
+            Console.WriteLine($"[Auth] User Found. ID: {user.Id}, Hash: {user.PasswordHash}");
+            
+            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            Console.WriteLine($"[Auth] BCrypt Verify Result: {isPasswordValid}");
+
+            if (!isPasswordValid)
+            {
+                 Console.WriteLine($"[Auth] Password mismatch for: {request.Email}");
+                 throw new Exception("Credenciais inválidas");
             }
 
             var token = GenerateJwtToken(user);
@@ -68,7 +80,7 @@ namespace AllureModa.API.Services
             if (principal == null)
                 throw new Exception("Invalid token");
 
-            var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = principal.FindFirst("sub")?.Value;
             if (string.IsNullOrEmpty(userId))
                 throw new Exception("Invalid token");
 
@@ -114,9 +126,9 @@ namespace AllureModa.API.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role.ToString())
+                    new Claim("sub", user.Id), // Standard Subject claim
+                    new Claim("email", user.Email),
+                    new Claim("role", user.Role.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -125,5 +137,6 @@ namespace AllureModa.API.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
     }
 }

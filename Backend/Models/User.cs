@@ -15,7 +15,7 @@ namespace AllureModa.API.Models
         public required string Email { get; set; }
 
         [JsonIgnore]
-        public required string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = null!;
 
         [Required]
         public required string FirstName { get; set; }
