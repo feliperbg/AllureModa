@@ -19,7 +19,9 @@ namespace AllureModa.API.Controllers
             _context = context;
         }
 
-        [HttpGet("stats")]
+        /*
+        [HttpGet("stats-old")]
+        [Obsolete("Use AdminStatsController.GetDashboardStats instead")]
         public async Task<ActionResult<AdminStatsResponse>> GetStats()
         {
             var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
@@ -103,6 +105,7 @@ namespace AllureModa.API.Controllers
                 Charts = charts
             });
         }
+        */
 
         [HttpGet("users")]
         public async Task<ActionResult<IEnumerable<User>>> ListUsers([FromQuery] int page = 1, [FromQuery] int limit = 50)

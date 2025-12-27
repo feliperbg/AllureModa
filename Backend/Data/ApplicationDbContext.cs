@@ -33,6 +33,10 @@ namespace AllureModa.API.Data
         public DbSet<WebhookLog> WebhookLogs { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
 
+        // CMS
+        public DbSet<PageConfig> PageConfigs { get; set; }
+        public DbSet<PageBlock> PageBlocks { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -140,6 +144,21 @@ namespace AllureModa.API.Data
                 .WithMany(c => c.Children)
                 .HasForeignKey(c => c.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // CMS Configuration
+            modelBuilder.Entity<PageConfig>()
+                .HasIndex(p => new { p.PageSlug, p.IsDraft })
+                .IsUnique();
+
+            modelBuilder.Entity<PageBlock>()
+                .Property(b => b.Type)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<PageBlock>()
+                .HasOne(b => b.PageConfig)
+                .WithMany(p => p.Blocks)
+                .HasForeignKey(b => b.PageConfigId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // decimal precision
              foreach (var property in modelBuilder.Model.GetEntityTypes()

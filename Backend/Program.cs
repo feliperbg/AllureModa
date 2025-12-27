@@ -56,6 +56,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddHttpClient<AllureModa.API.Services.IShippingService, AllureModa.API.Services.MelhorEnvioService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IPageConfigService, PageConfigService>();
 
 // Hangfire
 builder.Services.AddHangfire(config => config
@@ -78,6 +80,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // 4. Authentication (JWT with HttpOnly Cookie support)
+System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); // Disable SOAP/XML claim mapping
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"];
 if (string.IsNullOrEmpty(secretKey)) throw new Exception("JWT Secret is missing in appsettings");
@@ -89,6 +92,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false; // Disable automatic claim mapping
     options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.SaveToken = true;
     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
@@ -97,7 +101,8 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey)),
         ValidateIssuer = false,
         ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = "role"
     };
     
     // Read JWT from HttpOnly cookie if not in Authorization header
@@ -105,11 +110,26 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            // Try to get token from cookie
             if (context.Request.Cookies.ContainsKey("access_token"))
             {
                 context.Token = context.Request.Cookies["access_token"];
             }
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"[Auth] Authentication Failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var claims = context.Principal?.Claims.Select(c => $"{c.Type}={c.Value}").ToList();
+            Console.WriteLine($"[Auth] Token Validated. User: {context.Principal?.Identity?.Name}. Claims: {string.Join(", ", claims ?? new List<string>())}");
+            return Task.CompletedTask;
+        },
+        OnForbidden = context =>
+        {
+            Console.WriteLine($"[Auth] Forbidden: {context.Response.StatusCode}");
             return Task.CompletedTask;
         }
     };

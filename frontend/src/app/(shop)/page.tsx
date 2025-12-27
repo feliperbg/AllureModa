@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import { Hero, FeaturedProducts, Mission } from "@/components/shop";
+import { HomepageContent } from "@/components/shop/HomepageContent";
 
-export default function HomePage() {
+// Loading fallback that shows static content
+function HomepageLoading() {
     return (
         <div className="bg-allure-beige text-allure-black font-sans antialiased">
             <Hero />
@@ -8,5 +11,13 @@ export default function HomePage() {
             <FeaturedProducts type="promo" />
             <Mission />
         </div>
+    );
+}
+
+export default function HomePage() {
+    return (
+        <Suspense fallback={<HomepageLoading />}>
+            <HomepageContent />
+        </Suspense>
     );
 }

@@ -128,7 +128,8 @@ namespace AllureModa.API.Services
                 {
                     new Claim("sub", user.Id), // Standard Subject claim
                     new Claim("email", user.Email),
-                    new Claim("role", user.Role.ToString())
+                    new Claim("role", user.Role.ToString()),
+                    new Claim(ClaimTypes.Role, user.Role.ToString()) // Standard .NET Claim
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

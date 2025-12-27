@@ -174,17 +174,16 @@ namespace AllureModa.API.Controllers
             {
                 HttpOnly = true,          // JavaScript cannot access
                 Secure = true,            // Only sent over HTTPS
-                SameSite = SameSiteMode.Strict,  // CSRF protection
+                SameSite = SameSiteMode.Lax,  // Relaxed for usability
                 Expires = DateTime.UtcNow.AddDays(7),
                 Path = "/",
                 IsEssential = true
             };
 
-            // In development, allow non-HTTPS
+            // In development, ensure non-HTTPS works
             if (_configuration["ASPNETCORE_ENVIRONMENT"] == "Development")
             {
                 cookieOptions.Secure = false;
-                cookieOptions.SameSite = SameSiteMode.Lax;
             }
 
             Response.Cookies.Append("access_token", token, cookieOptions);

@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Boxes, Users, Store, FolderOpen, Tag, Palette, TicketPercent } from "lucide-react";
+import { LayoutDashboard, Boxes, Users, Store, FolderOpen, Tag, Palette, TicketPercent, Home } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     const navItems = [
         { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+        { name: "Homepage", href: "/admin/homepage", icon: Home },
         { name: "Produtos", href: "/admin/products", icon: Boxes },
         { name: "Categorias", href: "/admin/categories", icon: FolderOpen },
         { name: "Marcas", href: "/admin/brands", icon: Tag },
