@@ -3,7 +3,12 @@ const { createOrder, findAllOrders, findOrderById } = require('../model/order');
 
 const createOrderController = async (req, res) => {
   try {
-    const order = await createOrder(req.body);
+    // Force userId to be the authenticated user's ID
+    const orderData = {
+      ...req.body,
+      userId: req.user.id
+    };
+    const order = await createOrder(orderData);
     res.status(201).json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -12,7 +17,8 @@ const createOrderController = async (req, res) => {
 
 const findAllOrdersController = async (req, res) => {
   try {
-    const orders = await findAllOrders();
+    // Pass the authenticated user's ID
+    const orders = await findAllOrders(req.user.id);
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -21,7 +27,8 @@ const findAllOrdersController = async (req, res) => {
 
 const findOrderByIdController = async (req, res) => {
   try {
-    const order = await findOrderById(req.params.id);
+    // Pass the authenticated user's ID
+    const order = await findOrderById(req.params.id, req.user.id);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
