@@ -20,8 +20,17 @@ const corsOptions = {
 
     const allowedOrigins = [process.env.FRONTEND_URL];
     
-    // Verifica se a origem está na lista permitida, é uma preview do Vercel ou é localhost
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || origin.includes('localhost')) {
+    // Adiciona origens extras permitidas via variável de ambiente (separadas por vírgula)
+    if (process.env.ALLOWED_ORIGINS) {
+      process.env.ALLOWED_ORIGINS.split(',').forEach(o => allowedOrigins.push(o.trim()));
+    }
+
+    // Regras estritas para localhost e IPs locais
+    const isLocalhost = /^http:\/\/localhost(:\d+)?$/.test(origin);
+    const isLocalIp = /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+
+    // Verifica se a origem está na lista permitida ou é localhost válido
+    if (allowedOrigins.includes(origin) || isLocalhost || isLocalIp) {
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin); // Log para debug
