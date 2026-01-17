@@ -21,7 +21,7 @@ const findAllWishlistItemsByUserIdController = async (req, res) => {
 
 const deleteWishlistItemController = async (req, res) => {
   try {
-    const wishlistItem = await deleteWishlistItem(req.params.id);
+    const wishlistItem = await deleteWishlistItem(req.params.id, req.user.id);
     res.status(200).json(wishlistItem);
   } catch (error) {
     res.status(500).json({ message: error.message });
