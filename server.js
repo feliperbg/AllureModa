@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const { securityHeaders } = require('./middleware/security');
 
 // Verificação de variáveis de ambiente
 if (!process.env.DATABASE_URL || !process.env.JWT_SECRET || !process.env.FRONTEND_URL) {
@@ -33,6 +34,10 @@ const corsOptions = {
 
 
 app.use(cors(corsOptions));
+
+// Security Headers Middleware
+app.use(securityHeaders);
+app.disable('x-powered-by'); // Remove X-Powered-By header
 
 // Middlewares essenciais
 app.use(cookieParser()); // Para parsear cookies
