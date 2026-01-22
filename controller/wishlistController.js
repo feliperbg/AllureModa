@@ -21,9 +21,12 @@ const findAllWishlistItemsByUserIdController = async (req, res) => {
 
 const deleteWishlistItemController = async (req, res) => {
   try {
-    const wishlistItem = await deleteWishlistItem(req.params.id);
+    const wishlistItem = await deleteWishlistItem(req.params.id, req.user.id);
     res.status(200).json(wishlistItem);
   } catch (error) {
+    if (error.message.includes('not found') || error.message.includes('Access denied')) {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: error.message });
   }
 };
