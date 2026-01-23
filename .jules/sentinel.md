@@ -9,3 +9,8 @@
 **Vulnerability:** IDOR in `updateAddress` and `deleteAddress` allowed unauthorized modification of addresses.
 **Learning:** Model functions `update` and `delete` relied solely on ID, allowing bypass if the controller failed to verify ownership.
 **Prevention:** Modified model signatures to require `userId` and implemented `findFirst` check before mutation.
+
+## 2024-05-25 - IDOR in Wishlist Management
+**Vulnerability:** IDOR in `deleteWishlistItem` allowed unauthorized deletion of wishlist items.
+**Learning:** Similar to Address and Order, the Wishlist model lacked ownership verification in delete operations. This confirms a pattern of missing ownership checks in earlier development phases.
+**Prevention:** Enforced `userId` requirement in `deleteWishlistItem` model method and controller, aligning with the pattern established in Address/Order modules.
