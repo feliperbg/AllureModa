@@ -24,7 +24,18 @@ const findAllWishlistItemsByUserId = async (userId) => {
   return wishlistItems;
 };
 
-const deleteWishlistItem = async (id) => {
+const deleteWishlistItem = async (id, userId) => {
+  const item = await prisma.wishlistItem.findFirst({
+    where: {
+      id,
+      userId,
+    },
+  });
+
+  if (!item) {
+    throw new Error('Item not found or access denied');
+  }
+
   const wishlistItem = await prisma.wishlistItem.delete({
     where: {
       id,
