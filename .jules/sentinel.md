@@ -9,3 +9,8 @@
 **Vulnerability:** IDOR in `updateAddress` and `deleteAddress` allowed unauthorized modification of addresses.
 **Learning:** Model functions `update` and `delete` relied solely on ID, allowing bypass if the controller failed to verify ownership.
 **Prevention:** Modified model signatures to require `userId` and implemented `findFirst` check before mutation.
+
+## 2024-06-25 - Mass Assignment in Review Creation
+**Vulnerability:** Mass Assignment / IDOR in `createReviewController` allowed users to create reviews on behalf of others by supplying a `userId` in the request body.
+**Learning:** Passing `req.body` directly to model creation functions is dangerous, even if the user is authenticated.
+**Prevention:** Always destructure allowed fields from `req.body` in the controller and explicitly inject sensitive fields like `userId` from trusted sources (`req.user`).
