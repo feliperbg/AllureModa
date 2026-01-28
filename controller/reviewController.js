@@ -3,7 +3,20 @@ const { createReview, findAllReviewsByProductId } = require('../model/review');
 
 const createReviewController = async (req, res) => {
   try {
-    const review = await createReview(req.body);
+    const { productId, rating, comment } = req.body;
+
+    if (!productId || rating === undefined) {
+      return res.status(400).json({ message: 'ProductId and rating are required.' });
+    }
+
+    const reviewData = {
+      productId,
+      rating,
+      comment,
+      userId: req.user.id,
+    };
+
+    const review = await createReview(reviewData);
     res.status(201).json(review);
   } catch (error) {
     res.status(500).json({ message: error.message });
